@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, ForeignKey, Index, String, Text, func
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -23,7 +23,13 @@ class User(Base):
 
 class WorkerProfile(Base):
     __tablename__ = "worker_profiles"
-    __table_args__ = (Index("ix_worker_profiles_user_id", "user_id"),)
+    __table_args__ = (
+        Index("ix_worker_profiles_user_id", "user_id"),
+        CheckConstraint(
+            "onboarding_status IN ('draft', 'pending_review', 'approved', 'restricted')",
+            name="ck_worker_profiles_onboarding_status",
+        ),
+    )
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     user_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), unique=True)

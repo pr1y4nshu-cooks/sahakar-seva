@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, ForeignKey, Index, String, UniqueConstraint, func
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, String, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -10,6 +10,12 @@ from app.db.base import Base
 
 class Organization(Base):
     __tablename__ = "organizations"
+    __table_args__ = (
+        CheckConstraint(
+            "organization_type IN ('business', 'cooperative')",
+            name="ck_organizations_organization_type",
+        ),
+    )
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     name: Mapped[str] = mapped_column(String(160))
@@ -23,6 +29,10 @@ class OrganizationMembership(Base):
     __table_args__ = (
         UniqueConstraint("organization_id", "user_id", name="uq_organization_membership"),
         Index("ix_organization_memberships_user_id", "user_id"),
+        CheckConstraint(
+            "membership_role IN ('owner', 'admin', 'member')",
+            name="ck_organization_memberships_role",
+        ),
     )
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
