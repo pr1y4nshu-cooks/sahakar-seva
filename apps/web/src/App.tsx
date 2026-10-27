@@ -10,14 +10,7 @@ import { Earn } from "./pages/Earn";
 import { Organizations } from "./pages/Organizations";
 import { AuthProvider } from "./lib/auth";
 import { ErrorBoundary } from "./components/ui/ErrorBoundary";
-
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  return <Routes><Route path="*" element={children} /></Routes>;
-}
-
-function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
-  return <Routes><Route path="*" element={children} /></Routes>;
-}
+import { AuthGuard, PublicOnlyGuard } from "./components/auth/AuthGuard";
 
 export function App() {
   return (
@@ -26,38 +19,38 @@ export function App() {
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />
-            <Route path="login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
-            <Route path="signup" element={<PublicOnlyRoute><Signup /></PublicOnlyRoute>} />
+            <Route path="login" element={<PublicOnlyGuard><Login /></PublicOnlyGuard>} />
+            <Route path="signup" element={<PublicOnlyGuard><Signup /></PublicOnlyGuard>} />
             <Route
               path="dashboard"
               element={
-                <ProtectedRoute>
+                <AuthGuard>
                   <Dashboard />
-                </ProtectedRoute>
+                </AuthGuard>
               }
             />
             <Route
               path="profile"
               element={
-                <ProtectedRoute>
+                <AuthGuard>
                   <Profile />
-                </ProtectedRoute>
+                </AuthGuard>
               }
             />
             <Route
               path="earn"
               element={
-                <ProtectedRoute>
+                <AuthGuard>
                   <Earn />
-                </ProtectedRoute>
+                </AuthGuard>
               }
             />
             <Route
               path="organizations"
               element={
-                <ProtectedRoute>
+                <AuthGuard>
                   <Organizations />
-                </ProtectedRoute>
+                </AuthGuard>
               }
             />
             <Route path="hire" element={<Placeholder title="Hire a Worker" description="Worker discovery and direct hiring will be introduced in Phase 3." />} />

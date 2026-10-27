@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { PageWrapper, ErrorState } from "@/components/ui/States";
+import { EmailConfirmationRequired } from "@/components/auth/AuthGuard";
 
 export function Signup() {
   const navigate = useNavigate();
@@ -17,11 +18,13 @@ export function Signup() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [needsEmailConfirmation, setNeedsEmailConfirmation] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
+    setNeedsEmailConfirmation(false);
 
     if (password !== confirmPassword) {
       setError("Passwords do not match");
@@ -40,8 +43,7 @@ export function Signup() {
 
     if (authError) {
       if (authError.code === 'EMAIL_CONFIRMATION_REQUIRED') {
-        setSuccess("Account created! Please check your email to confirm your address.");
-        setTimeout(() => navigate("/login"), 3000);
+        setNeedsEmailConfirmation(true);
       } else {
         setError(authError.message || "Failed to create account");
       }
@@ -50,6 +52,31 @@ export function Signup() {
       setTimeout(() => navigate("/dashboard"), 1000);
     }
   };
+
+  const handleResendConfirmation = async () => {
+    setLoading(true);
+    const { error: authError } = await signUp(email, password);
+    setLoading(false);
+
+    if (authError) {
+      setError(authError.message || "Failed to resend confirmation");
+    } else {
+      setSuccess("Confirmation email sent! Please check your inbox.");
+    }
+  };
+
+  if (needsEmailConfirmation) {
+    return (
+      <EmailConfirmationRequired
+        email={email}
+        onResend={handleResendConfirmation}
+        onBackToLogin={() => {
+          setNeedsEmailConfirmation(false);
+          navigate("/login");
+        }}
+      />
+    );
+  }
 
   return (
     <PageWrapper className="min-h-screen">
