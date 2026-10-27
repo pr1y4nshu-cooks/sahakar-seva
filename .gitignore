@@ -17,6 +17,7 @@ coverage/
 *.log
 *.egg-info/
 .agent/
+.claude
 
 # IDE/editor
 .idea/
