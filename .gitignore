@@ -1,0 +1,28 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+node_modules/
+dist/
+coverage/
+.vite/
+*.log
+*.egg-info/
+.agent/
+
+# IDE/editor
+.idea/
+.vscode/
+
+# TypeScript/Vite build artifacts
+*.tsbuildinfo
+apps/web/vite.config.js
+apps/web/vite.config.d.ts
