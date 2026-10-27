@@ -8,61 +8,58 @@ import { Dashboard } from "./pages/Dashboard";
 import { Profile } from "./pages/Profile";
 import { Earn } from "./pages/Earn";
 import { Organizations } from "./pages/Organizations";
+import { Hire } from "./pages/Hire";
+import { FindWork } from "./pages/FindWork";
 import { AuthProvider } from "./lib/auth";
-
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  return <Routes><Route path="*" element={children} /></Routes>;
-}
-
-function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
-  return <Routes><Route path="*" element={children} /></Routes>;
-}
+import { ErrorBoundary } from "./components/ui/ErrorBoundary";
+import { AuthGuard, PublicOnlyGuard } from "./components/auth/AuthGuard";
 
 export function App() {
   return (
-    <AuthProvider>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
-          <Route path="signup" element={<PublicOnlyRoute><Signup /></PublicOnlyRoute>} />
-          <Route
-            path="dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="profile"
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="earn"
-            element={
-              <ProtectedRoute>
-                <Earn />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="organizations"
-            element={
-              <ProtectedRoute>
-                <Organizations />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="hire" element={<Placeholder title="Hire a Worker" description="Worker discovery and direct hiring will be introduced in Phase 3." />} />
-          <Route path="find-work" element={<Placeholder title="Find Work" description="Job discovery and applications will be introduced in Phase 3." />} />
-        </Route>
-      </Routes>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path="login" element={<PublicOnlyGuard><Login /></PublicOnlyGuard>} />
+            <Route path="signup" element={<PublicOnlyGuard><Signup /></PublicOnlyGuard>} />
+            <Route
+              path="dashboard"
+              element={
+                <AuthGuard>
+                  <Dashboard />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="profile"
+              element={
+                <AuthGuard>
+                  <Profile />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="earn"
+              element={
+                <AuthGuard>
+                  <Earn />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="organizations"
+              element={
+                <AuthGuard>
+                  <Organizations />
+                </AuthGuard>
+              }
+            />
+            <Route path="hire" element={<Hire />} />
+            <Route path="find-work" element={<FindWork />} />
+          </Route>
+        </Routes>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
-

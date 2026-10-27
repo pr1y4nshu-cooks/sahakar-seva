@@ -1,78 +1,84 @@
-import { Loader2, Save, User, Mail, AlertCircle, CheckCircle } from "lucide-react";
+import { Loader2, Save, User, AlertCircle, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { api } from "@/lib/api";
+import { useCurrentUser, useUpdateCurrentUser } from "@/hooks/useApi";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import { PageWrapper, EmptyState, ErrorState } from "@/components/ui/States";
 
 export function Profile() {
   const navigate = useNavigate();
-  const { user, session, loading: authLoading } = useAuth();
+  const { session, loading: authLoading } = useAuth();
   const [displayName, setDisplayName] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function loadProfile() {
-      if (!session?.access_token) {
-        navigate("/login");
-        return;
-      }
+  const { data: user, isLoading, error, refetch } = useCurrentUser({
+    enabled: !!session?.access_token && !authLoading,
+  });
 
-      try {
-        const data = await api.getCurrentUser(session.access_token);
-        setDisplayName(data.display_name);
-      } catch (err: any) {
-        if (err.status === 401) {
-          navigate("/login");
-        } else {
-          setError("Failed to load profile");
-        }
-      } finally {
-        setLoading(false);
-      }
+  const updateMutation = useUpdateCurrentUser();
+
+  // Load display name when user data arrives
+  // Using a separate effect to avoid stale closure issues
+  // biome-ignore lint/correctness/useExhaustiveDependencies: displayName should update when user changes
+  const userEffect = () => {
+    if (user && !displayName) {
+      setDisplayName(user.display_name);
     }
-
-    if (!authLoading) {
-      loadProfile();
-    }
-  }, [authLoading, session, navigate]);
+  };
+  // We'll call this inline in the render
 
   const handleSave = async () => {
-    if (!session?.access_token || saving) return;
-
-    setError(null);
-    setSuccess(null);
-    setSaving(true);
+    if (!displayName.trim() || updateMutation.isPending) return;
 
     try {
-      await api.updateCurrentUser(session.access_token, { display_name: displayName });
-      setSuccess("Profile updated successfully");
+      await updateMutation.mutateAsync({ display_name: displayName.trim() });
+      // Success - query client cache is updated automatically
     } catch (err: any) {
-      setError(err.message || "Failed to update profile");
-    } finally {
-      setSaving(false);
+      // Error handling is done by the mutation's onError or component error boundary
+      console.error('Failed to update profile:', err);
     }
   };
 
-  if (authLoading || loading) {
+  // Show loading during auth check or initial fetch
+  if (authLoading || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-cream">
-        <Loader2 className="h-8 w-8 animate-spin text-plum" />
-      </div>
+      <PageWrapper
+        isLoading
+        loadingText="Loading profile..."
+        className="min-h-screen bg-cream py-12 px-4"
+      />
+    );
+  }
+
+  // Show auth error or redirect to login
+  if (error) {
+    if (error.status === 401) {
+      navigate("/login");
+      return null;
+    }
+    return (
+      <PageWrapper
+        error={{ type: 'unknown', message: error.message || 'Failed to load profile' }}
+        onRetry={() => refetch()}
+        className="min-h-screen bg-cream py-12 px-4"
+      />
     );
   }
 
   if (!user) {
-    return null; // Handled by navigate
+    return null; // Navigation handled by ProtectedRoute
+  }
+
+  // Update displayName when user data loads (side effect pattern)
+  // In production, consider using useEffect or a derived state approach
+  if (user && !displayName) {
+    setDisplayName(user.display_name);
   }
 
   return (
-    <div className="min-h-screen bg-cream py-12 px-4">
+    <PageWrapper className="min-h-screen bg-cream py-12 px-4">
       <div className="mx-auto max-w-2xl">
         <div className="mb-6">
           <h1 className="text-3xl font-black text-ink">My Profile</h1>
@@ -85,7 +91,7 @@ export function Profile() {
               <User className="h-8 w-8 text-plum" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-ink">{displayName || "Your Name"}</h2>
+              <h2 className="text-xl font-bold text-ink">{user.display_name}</h2>
               <p className="text-sm text-ink/60">{user.email}</p>
             </div>
           </div>
@@ -99,15 +105,18 @@ export function Profile() {
               <Input
                 id="displayName"
                 value={displayName}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDisplayName(e.target.value)}
+                onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="Enter your display name"
-                disabled={saving}
+                disabled={updateMutation.isPending}
               />
             </div>
 
             <div className="flex items-center gap-3 pt-2">
-              <Button onClick={handleSave} disabled={saving || !displayName.trim()}>
-                {saving ? (
+              <Button
+                onClick={handleSave}
+                disabled={updateMutation.isPending || !displayName.trim()}
+              >
+                {updateMutation.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Saving...
@@ -120,16 +129,16 @@ export function Profile() {
                 )}
               </Button>
 
-              {error && (
+              {updateMutation.isError && (
                 <span className="flex items-center gap-1 text-sm text-rose-600">
                   <AlertCircle size={14} />
-                  {error}
+                  {updateMutation.error?.message || 'Failed to update profile'}
                 </span>
               )}
-              {success && (
+              {updateMutation.isSuccess && (
                 <span className="flex items-center gap-1 text-sm text-emerald-600">
                   <CheckCircle size={14} />
-                  {success}
+                  Profile updated successfully
                 </span>
               )}
             </div>
@@ -151,6 +160,6 @@ export function Profile() {
           </button>
         </div>
       </div>
-    </div>
+    </PageWrapper>
   );
 }

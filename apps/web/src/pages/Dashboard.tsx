@@ -2,55 +2,50 @@ import { LayoutDashboard, Briefcase, Building2, User, Settings, Loader2, LogOut,
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { api, type WorkerProfile, type Organization } from "@/lib/api";
-import { Button } from "@/components/ui/Button";
+import { useMyOrganizations, useWorkerProfile } from "@/hooks/useApi";
 import { Card } from "@/components/ui/Card";
+import { PageWrapper } from "@/components/ui/States";
+import type { WorkerProfile, OrganizationWithMyRole } from "@/types/api";
 
 export function Dashboard() {
   const navigate = useNavigate();
   const { user, session, loading: authLoading, signOut } = useAuth();
   const [workerProfile, setWorkerProfile] = useState<WorkerProfile | null>(null);
-  const [organizations, setOrganizations] = useState<Organization[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [organizations, setOrganizations] = useState<OrganizationWithMyRole[]>([]);
+
+  const { data: workerProfileData, isLoading: workerLoading } = useWorkerProfile({
+    enabled: !!session?.access_token && !authLoading,
+  });
+
+  const { data: organizationsData = [], isLoading: orgLoading } = useMyOrganizations({
+    enabled: !!session?.access_token && !authLoading,
+  });
+
+  // Sync state with hook data
+  useEffect(() => {
+    if (workerProfileData) setWorkerProfile(workerProfileData);
+  }, [workerProfileData]);
 
   useEffect(() => {
-    async function loadData() {
-      if (!session?.access_token) {
-        navigate("/login");
-        return;
-      }
-
-      try {
-        const [profile, orgs] = await Promise.all([
-          api.getMyWorkerProfile(session.access_token).catch(() => null),
-          api.getMyOrganizations(session.access_token).catch(() => []),
-        ]);
-        setWorkerProfile(profile);
-        setOrganizations(orgs);
-      } catch (err: any) {
-        if (err.status === 401) {
-          navigate("/login");
-        }
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    if (!authLoading) {
-      loadData();
-    }
-  }, [authLoading, session, navigate]);
+    setOrganizations(organizationsData);
+  }, [organizationsData]);
 
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
   };
 
-  if (authLoading || loading) {
+  const isLoading = authLoading || workerLoading || orgLoading;
+
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-cream">
-        <Loader2 className="h-8 w-8 animate-spin text-plum" />
-      </div>
+      <PageWrapper
+        isLoading
+        loadingText="Loading dashboard..."
+        className="min-h-screen bg-cream"
+      >
+        <div />
+      </PageWrapper>
     );
   }
 
@@ -72,11 +67,11 @@ export function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-cream py-12 px-4">
+    <PageWrapper className="min-h-screen bg-cream py-12 px-4">
       <div className="mx-auto max-w-4xl">
         <div className="mb-8">
           <h1 className="text-3xl font-black text-ink">Dashboard</h1>
-          <p className="mt-2 text-ink/60">Welcome back, {user.user_metadata?.display_name || user.email?.split("@")[0] || "User"}!</p>
+          <p className="mt-2 text-ink/60">Welcome back, {user.display_name || user.email?.split("@")[0] || "User"}!</p>
         </div>
 
         {/* Quick Stats */}
@@ -229,6 +224,6 @@ export function Dashboard() {
           </div>
         </Card>
       </div>
-    </div>
+    </PageWrapper>
   );
 }
