@@ -8,6 +8,8 @@ import { Dashboard } from "./pages/Dashboard";
 import { Profile } from "./pages/Profile";
 import { Earn } from "./pages/Earn";
 import { Organizations } from "./pages/Organizations";
+import { Hire } from "./pages/Hire";
+import { FindWork } from "./pages/FindWork";
 import { AuthProvider } from "./lib/auth";
 import { ErrorBoundary } from "./components/ui/ErrorBoundary";
 import { AuthGuard, PublicOnlyGuard } from "./components/auth/AuthGuard";
@@ -53,8 +55,8 @@ export function App() {
                 </AuthGuard>
               }
             />
-            <Route path="hire" element={<Placeholder title="Hire a Worker" description="Worker discovery and direct hiring will be introduced in Phase 3." />} />
-            <Route path="find-work" element={<Placeholder title="Find Work" description="Job discovery and applications will be introduced in Phase 3." />} />
+            <Route path="hire" element={<Hire />} />
+            <Route path="find-work" element={<FindWork />} />
           </Route>
         </Routes>
       </AuthProvider>
