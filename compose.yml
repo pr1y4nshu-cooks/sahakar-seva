@@ -26,6 +26,13 @@ services:
       SUPABASE_URL: ${SUPABASE_URL:-}
       SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-}
       SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-}
+      # Simulated settlement fee policy (basis points; app refuses to start if fee > cap)
+      PLATFORM_FEE_BPS: ${PLATFORM_FEE_BPS:-1000}
+      PLATFORM_FEE_CAP_BPS: ${PLATFORM_FEE_CAP_BPS:-1500}
+      # Local demo identity — disabled unless explicitly enabled; refused unless APP_ENV=development
+      DEV_AUTH_ENABLED: ${DEV_AUTH_ENABLED:-false}
+      DEV_AUTH_SECRET: ${DEV_AUTH_SECRET:-}
+      DEV_AUTH_PASSCODE: ${DEV_AUTH_PASSCODE:-}
     ports:
       - "8000:8000"
     volumes:
@@ -40,6 +47,10 @@ services:
     working_dir: /app
     environment:
       VITE_API_BASE_URL: http://localhost:8000
+      # "supabase" (default) or "dev" (local demo identity; requires DEV_AUTH_ENABLED=true on the API)
+      VITE_AUTH_MODE: ${VITE_AUTH_MODE:-supabase}
+      VITE_SUPABASE_URL: ${VITE_SUPABASE_URL:-}
+      VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY:-}
     ports:
       - "5173:5173"
     volumes:

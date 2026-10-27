@@ -34,18 +34,27 @@ const isPlaceholderKey = (key: string | undefined): boolean => {
   return key === 'placeholder-key';
 };
 
+/**
+ * Identity mode:
+ * - 'supabase' (default): Supabase Auth issues sessions (production path).
+ * - 'dev': local development identity served by the API's /dev-auth/token endpoint. The API only
+ *   enables it with APP_ENV=development + DEV_AUTH_ENABLED=true and verifies every token server-side.
+ */
+export const authMode: 'supabase' | 'dev' = import.meta.env.VITE_AUTH_MODE === 'dev' ? 'dev' : 'supabase';
+
 export const apiMode = ((): 'real' | 'fixtures' => {
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-  const hasRealApi = apiBaseUrl && apiBaseUrl !== 'http://localhost:8000' && !apiBaseUrl.includes('placeholder');
+  // A local API (http://localhost:8000) is a real backend; only missing/placeholder URLs are not.
+  const hasRealApi = !!apiBaseUrl && !apiBaseUrl.includes('placeholder');
   const hasRealSupabase = !isPlaceholderUrl(supabaseUrl) && !isPlaceholderKey(supabaseAnonKey);
+  const hasIdentityProvider = hasRealSupabase || authMode === 'dev';
 
-  // If either is placeholder, use fixtures
-  if (!hasRealApi || !hasRealSupabase) {
+  if (!hasRealApi || !hasIdentityProvider) {
     console.warn(
-      '[API Adapter] Dev fixtures active. Set VITE_API_BASE_URL, VITE_SUPABASE_URL, and VITE_SUPABASE_ANON_KEY for real backend.'
+      '[API Adapter] Dev fixtures active. Set VITE_API_BASE_URL plus either VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY or VITE_AUTH_MODE=dev.'
     );
     return 'fixtures';
   }
@@ -81,8 +90,8 @@ export class AuthError extends ApiError {
 }
 
 export class ValidationError extends ApiError {
-  constructor(message: string, details?: ApiErrorResponse['error']['details']) {
-    super(message, 422, 'VALIDATION_ERROR', details);
+  constructor(message: string, details?: ApiErrorResponse['error']['details'], code: string = 'VALIDATION_ERROR') {
+    super(message, 422, code, details);
     this.name = 'ValidationError';
   }
 }
@@ -95,8 +104,8 @@ export class NotFoundError extends ApiError {
 }
 
 export class ConflictError extends ApiError {
-  constructor(message: string) {
-    super(message, 409, 'CONFLICT');
+  constructor(message: string, code: string = 'CONFLICT') {
+    super(message, 409, code);
     this.name = 'ConflictError';
   }
 }
@@ -116,7 +125,7 @@ export function getAccessToken(): string | null {
 
 // ===== Request Helper =====
 
-async function request<T>(
+export async function request<T>(
   path: string,
   options: RequestInit = {},
   token?: string | null
@@ -161,9 +170,9 @@ async function request<T>(
         case 404:
           throw new NotFoundError(message);
         case 409:
-          throw new ConflictError(message);
+          throw new ConflictError(message, code);
         case 422:
-          throw new ValidationError(message, details);
+          throw new ValidationError(message, details, code);
         default:
           throw new ApiError(message, response.status, code, details);
       }
@@ -261,8 +270,8 @@ export const api = {
 
 // ===== Mode Badge Helper =====
 
-export function getApiModeBadge(): { text: string; variant: 'dev' | 'prod' } {
-  return apiMode === 'fixtures'
-    ? { text: 'Dev fixtures active', variant: 'dev' }
-    : { text: 'Production API', variant: 'prod' };
+export function getApiModeBadge(): { text: string; variant: 'dev' | 'local-identity' | 'prod' } {
+  if (apiMode === 'fixtures') return { text: 'Dev fixtures active', variant: 'dev' };
+  if (authMode === 'dev') return { text: 'Local demo identity (not production auth)', variant: 'local-identity' };
+  return { text: 'Production API', variant: 'prod' };
 }

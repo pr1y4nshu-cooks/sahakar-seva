@@ -9,7 +9,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { setTokenProvider } from '@/hooks/useApi';
-import { api } from '@/lib/api-adapter';
+import { api, authMode, request } from '@/lib/api-adapter';
 import type { User } from '@/types/api';
 
 type AuthState = {
@@ -24,6 +24,36 @@ type AuthState = {
 };
 
 const AuthContext = createContext<AuthState | null>(null);
+
+// ===== Local development identity (VITE_AUTH_MODE=dev) =====
+// Tokens come from the API's /dev-auth/token endpoint, which exists only when the server runs with
+// APP_ENV=development and DEV_AUTH_ENABLED=true. Every request is still verified server-side.
+const DEV_SESSION_KEY = 'sahakar.devSession';
+
+type DevSession = { access_token: string; expires_at: string; email: string };
+
+function readDevSession(): DevSession | null {
+  try {
+    const raw = window.localStorage.getItem(DEV_SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as DevSession;
+    if (!parsed.access_token || new Date(parsed.expires_at).getTime() <= Date.now()) {
+      window.localStorage.removeItem(DEV_SESSION_KEY);
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function fetchBackendUser(token: string): Promise<User> {
+  return request<User>('/api/v1/users/me', {}, token);
+}
+
+function setGlobalToken(token: string | null) {
+  (window as any).__SAHAKAR_AUTH_TOKEN__ = token;
+}
 
 // Token provider for TanStack Query hooks
 async function getAuthToken(): Promise<string | null> {
@@ -49,6 +79,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       return;
     }
+    if (authMode === 'dev') {
+      try {
+        setUser(await fetchBackendUser(session.access_token));
+      } catch (err: any) {
+        if (err.status === 401) {
+          window.localStorage.removeItem(DEV_SESSION_KEY);
+          setUser(null);
+          setGlobalToken(null);
+        }
+        throw err;
+      }
+      return;
+    }
 
     try {
       const implementation = await api.getImplementation();
@@ -65,7 +108,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [session]);
 
+  // Dev identity mode: restore the stored session and resolve the server-side user.
   useEffect(() => {
+    if (authMode !== 'dev') return;
+    let mounted = true;
+    const stored = readDevSession();
+    if (!stored) {
+      setLoading(false);
+      return;
+    }
+    setGlobalToken(stored.access_token);
+    fetchBackendUser(stored.access_token)
+      .then((u) => {
+        if (!mounted) return;
+        setSession({ access_token: stored.access_token, expires_at: stored.expires_at, user: { email: stored.email } });
+        setUser(u);
+      })
+      .catch(() => {
+        window.localStorage.removeItem(DEV_SESSION_KEY);
+        setGlobalToken(null);
+      })
+      .finally(() => mounted && setLoading(false));
+    return () => { mounted = false; };
+  }, []);
+
+  const devSignIn = async (email: string, passcode: string) => {
+    try {
+      const res = await request<{ access_token: string; expires_at: string }>('/api/v1/dev-auth/token', {
+        method: 'POST',
+        body: JSON.stringify({ email, passcode }),
+      });
+      setGlobalToken(res.access_token);
+      const backendUser = await fetchBackendUser(res.access_token);
+      const devSession = { access_token: res.access_token, expires_at: res.expires_at, email };
+      window.localStorage.setItem(DEV_SESSION_KEY, JSON.stringify(devSession));
+      setSession({ access_token: res.access_token, expires_at: res.expires_at, user: { email } });
+      setUser(backendUser);
+      return { error: null, user: backendUser };
+    } catch (err: any) {
+      setGlobalToken(null);
+      return { error: { message: err?.message || 'Sign-in failed', code: err?.code } };
+    }
+  };
+
+  useEffect(() => {
+    if (authMode === 'dev') return;
     let mounted = true;
 
     const initAuth = async () => {
@@ -121,6 +208,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    if (authMode === 'dev') return devSignIn(email, password);
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
@@ -142,6 +230,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp = async (email: string, password: string) => {
+    // Dev identities are created on first verified request; there is no separate sign-up step.
+    if (authMode === 'dev') return devSignIn(email, password);
     const { data, error } = await supabase.auth.signUp({ email, password });
 
     if (error) {
@@ -178,7 +268,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    if (authMode === 'dev') {
+      window.localStorage.removeItem(DEV_SESSION_KEY);
+    } else {
+      await supabase.auth.signOut();
+    }
     setUser(null);
     setSession(null);
     (window as any).__SAHAKAR_AUTH_TOKEN__ = null;

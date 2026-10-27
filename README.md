@@ -24,6 +24,8 @@ Install Docker Desktop, Node.js 20+, npm, and Python 3.12+. Docker development i
 
 ## Option A: Docker development
 
+**Hackathon MVP quick start:** `sh scripts/dev_up.sh`, then open http://127.0.0.1:5173. Demo steps, the local demo identity and troubleshooting are in `docs/audits/LIVE_DEMO_RUNBOOK.md`. API decisions are in `docs/contracts/MVP_MARKETPLACE_CONTRACT.md`.
+
 ```bash
 cp .env.example .env
 docker compose up --build

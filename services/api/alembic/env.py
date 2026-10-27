@@ -10,7 +10,8 @@ from app import models  # noqa: F401
 config = context.config
 # An explicitly supplied URL/connection (e.g. the isolated test database) wins over app settings.
 if not config.attributes.get("connection") and not config.attributes.get("explicit_url"):
-    config.set_main_option("sqlalchemy.url", get_settings().database_url)
+    # Escape '%' so passwords containing it do not break configparser interpolation.
+    config.set_main_option("sqlalchemy.url", get_settings().database_url.replace("%", "%%"))
 if config.config_file_name is not None:
     fileConfig(config.config_file_name, disable_existing_loggers=False)
 

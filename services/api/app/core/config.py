@@ -1,8 +1,11 @@
 from functools import lru_cache
 from typing import Annotated, Any
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
+
+# Hard ceiling also enforced by a database CHECK on bookings/settlements.
+ABSOLUTE_FEE_CEILING_BPS = 2000
 
 
 class Settings(BaseSettings):
@@ -18,7 +21,32 @@ class Settings(BaseSettings):
     # Server-only HS256 secret for local token verification (Mode A). Never expose via VITE_* variables.
     supabase_jwt_secret: str | None = None
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    # --- Simulated settlement fee policy (pilot assumption, integer basis points) ---
+    platform_fee_bps: int = 1000
+    platform_fee_cap_bps: int = 1500
+
+    # --- Local development identity (never production auth; see MVP_MARKETPLACE_CONTRACT §9) ---
+    dev_auth_enabled: bool = False
+    dev_auth_secret: str | None = None
+    dev_auth_passcode: str | None = None
+    dev_auth_email_domain: str = "demo.sahakar.test"
+
+    model_config = SettingsConfigDict(env_file=(".env", "../../.env"), env_file_encoding="utf-8", extra="ignore")
+
+    @model_validator(mode="after")
+    def validate_policies(self) -> "Settings":
+        if not 0 <= self.platform_fee_cap_bps <= ABSOLUTE_FEE_CEILING_BPS:
+            raise ValueError(f"PLATFORM_FEE_CAP_BPS must be between 0 and {ABSOLUTE_FEE_CEILING_BPS}")
+        if not 0 <= self.platform_fee_bps <= self.platform_fee_cap_bps:
+            raise ValueError("PLATFORM_FEE_BPS must be between 0 and PLATFORM_FEE_CAP_BPS")
+        if self.dev_auth_enabled:
+            if self.app_env.lower() != "development":
+                raise ValueError("DEV_AUTH_ENABLED is only permitted when APP_ENV=development")
+            if not self.dev_auth_secret or len(self.dev_auth_secret) < 32:
+                raise ValueError("DEV_AUTH_SECRET must be set (at least 32 characters) when dev auth is enabled")
+            if not self.dev_auth_passcode or len(self.dev_auth_passcode) < 8:
+                raise ValueError("DEV_AUTH_PASSCODE must be set (at least 8 characters) when dev auth is enabled")
+        return self
 
     @field_validator("allowed_origins", mode="before")
     @classmethod

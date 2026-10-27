@@ -6,7 +6,8 @@ import { useWorkerProfile, useCreateWorkerProfile, useUpdateWorkerProfile } from
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
-import { PageWrapper, EmptyState, ErrorState } from "@/components/ui/States";
+import { PageWrapper } from "@/components/ui/States";
+import { AvailabilitySection, EarningsSection, ServiceAreaSection, SkillsSection } from "@/components/marketplace/WorkerSetup";
 
 type OnboardingStatus = 'draft' | 'pending_review' | 'approved' | 'restricted';
 
@@ -15,13 +16,13 @@ const statusInfo: Record<OnboardingStatus, { label: string; color: string; bg: s
     label: "Draft",
     color: "text-amber-700",
     bg: "bg-amber-50 border-amber-200",
-    description: "Your profile is a draft. It is not visible to customers yet. Complete your profile and submit for review when ready."
+    description: "Not platform-verified. Once you declare skills and set a service area, customers nearby can find you; your profile is labelled \"Not verified — self-declared\"."
   },
   pending_review: {
     label: "Pending Review",
     color: "text-blue-700",
     bg: "bg-blue-50 border-blue-200",
-    description: "Your profile is under review. You'll be notified once it's approved."
+    description: "Your profile is awaiting human review. Until then it is labelled as not verified."
   },
   approved: {
     label: "Approved",
@@ -119,7 +120,7 @@ export function Earn() {
 
   return (
     <PageWrapper className="min-h-screen bg-cream py-12 px-4">
-      <div className="mx-auto max-w-2xl">
+      <div className="mx-auto max-w-3xl space-y-6">
         <div className="mb-6">
           <h1 className="text-3xl font-black text-ink flex items-center gap-2">
             <Briefcase className="text-plum" size={28} />
@@ -139,7 +140,7 @@ export function Earn() {
                     Status: {statusInfo[profile.onboarding_status].label}
                   </span>
                   {profile.onboarding_status === "draft" && (
-                    <span className="text-xs text-ink/50">(Not visible to customers)</span>
+                    <span className="text-xs text-ink/50">(Not verified)</span>
                   )}
                 </div>
                 <p className="mt-1 text-sm text-ink/70">{statusInfo[profile.onboarding_status].description}</p>
@@ -155,7 +156,7 @@ export function Earn() {
               <h2 className="text-xl font-bold text-ink">Create Worker Profile</h2>
               <p className="text-sm text-ink/60">
                 This profile represents you as a worker. It's separate from your customer identity.
-                You can edit it anytime. Your onboarding status starts as <strong>Draft</strong> — not yet visible to customers.
+                You can edit it anytime. It starts as <strong>Draft</strong> (not platform-verified). Next you'll add skills, a service area and availability.
               </p>
 
               <div className="space-y-4">
@@ -277,6 +278,15 @@ export function Earn() {
             </>
           )}
         </Card>
+
+        {hasProfile && (
+          <>
+            <SkillsSection />
+            <ServiceAreaSection />
+            <AvailabilitySection />
+            <EarningsSection />
+          </>
+        )}
 
         <div className="mt-6 text-center">
           <button

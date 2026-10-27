@@ -33,5 +33,8 @@ SQL
 # PostGIS must be created by a superuser; migration 0001's CREATE EXTENSION IF NOT EXISTS then no-ops.
 docker compose exec -T db psql -U "$ADMIN_USER" -d "$TEST_DB" -v ON_ERROR_STOP=1 \
   -c "CREATE EXTENSION IF NOT EXISTS postgis"
+# btree_gist backs the booking/slot exclusion constraints in migration 0004 (idempotent).
+docker compose exec -T db psql -U "$ADMIN_USER" -d "$TEST_DB" -v ON_ERROR_STOP=1 \
+  -c "CREATE EXTENSION IF NOT EXISTS btree_gist WITH SCHEMA public"
 
 echo "Test database '$TEST_DB' (owner '$TEST_ROLE') is ready."

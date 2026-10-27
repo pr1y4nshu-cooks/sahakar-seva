@@ -23,6 +23,7 @@ from app.db.testing import alembic_config
 
 PHASE2 = "0002_phase2_constraints"
 PHASE3A = "0003_skills_and_categories"
+CURRENT_HEAD = "0004_marketplace_core"  # later additive migrations build on 0003
 NEW_TABLES = {"service_categories", "skills", "worker_skills"}
 
 
@@ -58,13 +59,13 @@ def _version(conn: Connection) -> str:
 
 def test_migration_graph_is_linear_with_expected_head() -> None:
     script = ScriptDirectory.from_config(alembic_config("postgresql+psycopg://unused/unused_test"))
-    assert script.get_heads() == [PHASE3A]
+    assert script.get_heads() == [CURRENT_HEAD]
     assert script.get_revision(PHASE3A).down_revision == PHASE2
 
 
 def test_fresh_database_upgrades_to_head(scratch) -> None:
     conn, cfg, schema = scratch
-    command.upgrade(cfg, "head")
+    command.upgrade(cfg, PHASE3A)  # 0004+ are covered by test_migration_0004.py
     conn.commit()
     assert _version(conn) == PHASE3A
     assert NEW_TABLES | {"users", "worker_profiles", "organizations", "organization_memberships"} <= _tables(conn, schema)
@@ -90,7 +91,7 @@ def test_upgrade_from_phase2_preserves_existing_rows_and_downgrade_is_clean(scra
     conn.commit()
     assert not (NEW_TABLES & _tables(conn, schema))
 
-    command.upgrade(cfg, "head")
+    command.upgrade(cfg, PHASE3A)
     conn.commit()
     assert _version(conn) == PHASE3A
     assert NEW_TABLES <= _tables(conn, schema)
@@ -108,7 +109,7 @@ def test_upgrade_from_phase2_preserves_existing_rows_and_downgrade_is_clean(scra
     assert not (NEW_TABLES & _tables(conn, schema))
     assert conn.execute(text("SELECT count(*) FROM worker_profiles")).scalar_one() == 1
 
-    command.upgrade(cfg, "head")  # re-upgrade after downgrade is repeatable
+    command.upgrade(cfg, PHASE3A)  # re-upgrade after downgrade is repeatable
     conn.commit()
     assert _version(conn) == PHASE3A
 

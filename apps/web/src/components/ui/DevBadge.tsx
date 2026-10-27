@@ -17,6 +17,13 @@ export function DevBadge() {
   if (badge.variant === 'prod') {
     return null;
   }
+  if (badge.variant === 'local-identity') {
+    return (
+      <div className="fixed bottom-4 left-4 z-40 rounded-full border border-amber-300 bg-amber-100 px-3 py-2 text-xs font-medium text-amber-800 shadow-lg" role="status">
+        {badge.text}
+      </div>
+    );
+  }
 
   return (
     <div className="fixed bottom-4 left-4 z-40">

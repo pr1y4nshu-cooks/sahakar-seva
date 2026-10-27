@@ -10,7 +10,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
+// `||` (not `??`): an empty string from the environment must also fall back, otherwise
+// createClient("") throws and the whole app fails to render.
 export const supabase = createClient(
-  supabaseUrl ?? "https://placeholder.supabase.co",
-  supabaseAnonKey ?? "placeholder-key"
+  supabaseUrl || "https://placeholder.supabase.co",
+  supabaseAnonKey || "placeholder-key"
 );

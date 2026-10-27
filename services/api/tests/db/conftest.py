@@ -51,6 +51,15 @@ _LEAK_CHECK_TABLES = (
     "service_categories",
     "skills",
     "worker_skills",
+    "worker_service_settings",
+    "availability_slots",
+    "jobs",
+    "job_applications",
+    "bookings",
+    "settlements",
+    "disputes",
+    "platform_reviewers",
+    "audit_events",
 )
 
 
