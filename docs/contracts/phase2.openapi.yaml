@@ -1,0 +1,551 @@
+openapi: 3.1.0
+info:
+  title: SAHAKAR-SEVA API - Phase 2
+  version: 1.0.0
+  description: >
+    Phase 2 OpenAPI contract for SAHAKAR-SEVA.
+    Covers Supabase authenticated identity sync, user profile, worker profile, and organization endpoints.
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+
+paths:
+  /api/v1/health:
+    get:
+      summary: API health check
+      operationId: getHealth
+      tags:
+        - health
+      responses:
+        '200':
+          description: API service responsive
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  service:
+                    type: string
+                    example: api
+                required:
+                  - status
+                  - service
+
+  /api/v1/health/db:
+    get:
+      summary: Database health check
+      operationId: getDatabaseHealth
+      tags:
+        - health
+      responses:
+        '200':
+          description: Database connected
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  database:
+                    type: string
+                    example: connected
+                required:
+                  - status
+                  - database
+        '503':
+          description: Database unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  database:
+                    type: string
+                    example: unavailable
+                required:
+                  - status
+                  - database
+
+  /api/v1/users/me:
+    get:
+      summary: Get or sync current authenticated user profile
+      description: >
+        Idempotently verifies bearer access token, maps external_auth_id (sub) to the app user,
+        and returns the current user profile.
+      operationId: getCurrentUser
+      tags:
+        - users
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Authentication missing, expired, or invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Identity conflict with existing email
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Auth provider unavailable or not configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    patch:
+      summary: Update current user display name
+      description: Update display_name of the current authenticated user (2-80 characters trimmed).
+      operationId: updateCurrentUser
+      tags:
+        - users
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        '200':
+          description: Updated user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Authentication missing or invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error or forbidden fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Auth provider unavailable or misconfigured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/worker-profiles:
+    post:
+      summary: Create worker profile
+      description: Creates the initial worker profile for the authenticated user with status "draft".
+      operationId: createWorkerProfile
+      tags:
+        - worker-profiles
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkerProfileCreate'
+      responses:
+        '201':
+          description: Worker profile created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkerProfile'
+        '401':
+          description: Authentication missing or invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Worker profile already exists for this user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error or forbidden fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/worker-profiles/me:
+    get:
+      summary: Get own worker profile
+      description: Returns the worker profile of the current authenticated user or 404 if not found.
+      operationId: getOwnWorkerProfile
+      tags:
+        - worker-profiles
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Owned worker profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkerProfile'
+        '401':
+          description: Authentication missing or invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Worker profile does not exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    patch:
+      summary: Update own worker profile
+      description: Update display_name and/or bio (max 500 characters, nullable) of owned worker profile.
+      operationId: updateOwnWorkerProfile
+      tags:
+        - worker-profiles
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkerProfileUpdate'
+      responses:
+        '200':
+          description: Updated worker profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkerProfile'
+        '401':
+          description: Authentication missing or invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Worker profile not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error or forbidden fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/organizations:
+    post:
+      summary: Create organization
+      description: >
+        Creates an organization (business or cooperative) and assigns the creator as "owner"
+        in a single atomic database transaction.
+      operationId: createOrganization
+      tags:
+        - organizations
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationCreate'
+      responses:
+        '201':
+          description: Organization created with owner membership
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationWithMyRole'
+        '401':
+          description: Authentication missing or invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error or forbidden fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/organizations/mine:
+    get:
+      summary: List caller's organizations
+      description: Lists organizations where the current authenticated user has an active membership.
+      operationId: listMyOrganizations
+      tags:
+        - organizations
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of user organizations with scoped role
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrganizationWithMyRole'
+        '401':
+          description: Authentication missing or invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase user access token
+
+  schemas:
+    ErrorDetail:
+      type: object
+      properties:
+        code:
+          type: string
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          example: display_name must be between 2 and 80 characters.
+        details:
+          type: object
+          additionalProperties: true
+      required:
+        - code
+        - message
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorDetail'
+      required:
+        - error
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        display_name:
+          type: string
+          minLength: 2
+          maxLength: 80
+        email:
+          type: string
+          format: email
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - display_name
+        - email
+        - created_at
+        - updated_at
+      additionalProperties: false
+
+    UserUpdate:
+      type: object
+      properties:
+        display_name:
+          type: string
+          minLength: 2
+          maxLength: 80
+      required:
+        - display_name
+      additionalProperties: false
+
+    WorkerProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        display_name:
+          type: string
+          minLength: 2
+          maxLength: 80
+        bio:
+          type:
+            - string
+            - 'null'
+          maxLength: 500
+        onboarding_status:
+          type: string
+          enum:
+            - draft
+            - pending_review
+            - approved
+            - restricted
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - user_id
+        - display_name
+        - bio
+        - onboarding_status
+        - created_at
+        - updated_at
+      additionalProperties: false
+
+    WorkerProfileCreate:
+      type: object
+      properties:
+        display_name:
+          type: string
+          minLength: 2
+          maxLength: 80
+        bio:
+          type:
+            - string
+            - 'null'
+          maxLength: 500
+          default: null
+      required:
+        - display_name
+      additionalProperties: false
+
+    WorkerProfileUpdate:
+      type: object
+      properties:
+        display_name:
+          type: string
+          minLength: 2
+          maxLength: 80
+        bio:
+          type:
+            - string
+            - 'null'
+          maxLength: 500
+      additionalProperties: false
+      minProperties: 1
+
+    OrganizationWithMyRole:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 2
+          maxLength: 120
+        organization_type:
+          type: string
+          enum:
+            - business
+            - cooperative
+        my_membership_role:
+          type: string
+          enum:
+            - owner
+            - admin
+            - member
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - organization_type
+        - my_membership_role
+        - created_at
+        - updated_at
+      additionalProperties: false
+
+    OrganizationCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 120
+        organization_type:
+          type: string
+          enum:
+            - business
+            - cooperative
+      required:
+        - name
+        - organization_type
+      additionalProperties: false
