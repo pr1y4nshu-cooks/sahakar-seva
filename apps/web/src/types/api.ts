@@ -12,6 +12,14 @@
 
 export type UUID = string;
 
+// Type aliases matching OpenAPI contract names exactly
+export type ErrorDetail = ApiErrorDetail;
+export type ErrorResponse = ApiErrorResponse;
+export type UserUpdate = UserUpdateRequest;
+export type WorkerProfileCreate = WorkerProfileCreateRequest;
+export type WorkerProfileUpdate = WorkerProfileUpdateRequest;
+export type OrganizationCreate = OrganizationCreateRequest;
+
 export interface ApiErrorDetail {
   code: string;
   message: string;
