@@ -6,6 +6,21 @@
 body { margin: 0; min-width: 320px; }
 * { box-sizing: border-box; }
 
+/* Focus visible styles for keyboard accessibility */
+.focus-visible-ring:focus-visible {
+  outline: none;
+  ring: 2px;
+  ring-color: theme('colors.plum');
+  ring-offset: 2px;
+  ring-offset-color: white;
+}
+
+/* Fallback for browsers without :focus-visible support */
+.focus-visible-ring:focus:not(:focus-visible) {
+  outline: none;
+  ring: none;
+}
+
 @keyframes slide-up {
   from {
     opacity: 0;
@@ -19,5 +34,22 @@ body { margin: 0; min-width: 320px; }
 
 .animate-slide-up {
   animation: slide-up 0.2s ease-out;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .animate-slide-up,
+  .animate-pulse,
+  .animate-spin {
+    animation: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .focus-visible-ring:focus-visible {
+    ring-width: 3px;
+    ring-offset-width: 3px;
+  }
 }
 

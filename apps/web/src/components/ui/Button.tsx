@@ -13,9 +13,11 @@ const variantStyles: Record<ButtonVariant, string> = {
   ghost: 'bg-transparent text-ink hover:bg-ink/5',
 };
 
+const focusStyles = 'focus-visible-ring';
+
 export function Button({ className = "", variant = 'primary', ...props }: ButtonProps) {
   const baseStyles = 'rounded-full px-5 py-3 text-sm font-semibold transition disabled:opacity-50';
   const variantStyle = variantStyles[variant] ?? variantStyles.primary;
-  return <button className={`${baseStyles} ${variantStyle} ${className}`} {...props} />;
+  return <button className={`${baseStyles} ${variantStyle} ${focusStyles} ${className}`} {...props} />;
 }
 
