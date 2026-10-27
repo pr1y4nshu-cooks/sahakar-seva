@@ -1,83 +1,65 @@
-import { Building2, Loader2, Plus, Save, AlertCircle, CheckCircle, Users, AlertTriangle, X } from "lucide-react";
+import { Building2, Loader2, Plus, AlertCircle, CheckCircle, Users, AlertTriangle, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
-import { api, type Organization } from "@/lib/api";
+import { useMyOrganizations, useCreateOrganization } from "@/hooks/useApi";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import { PageWrapper, ErrorState } from "@/components/ui/States";
 
 export function Organizations() {
   const navigate = useNavigate();
   const { session, loading: authLoading } = useAuth();
-  const [organizations, setOrganizations] = useState<Organization[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
   const [orgType, setOrgType] = useState<"business" | "cooperative">("business");
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function loadOrganizations() {
-      if (!session?.access_token) {
-        navigate("/login");
-        return;
-      }
+  const { data: organizations = [], isLoading, error, refetch } = useMyOrganizations({
+    enabled: !!session?.access_token && !authLoading,
+  });
 
-      try {
-        const data = await api.getMyOrganizations(session.access_token);
-        setOrganizations(data);
-      } catch (err: any) {
-        if (err.status === 401) {
-          navigate("/login");
-        } else {
-          setError("Failed to load organizations");
-        }
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    if (!authLoading) {
-      loadOrganizations();
-    }
-  }, [authLoading, session, navigate]);
+  const createMutation = useCreateOrganization();
 
   const handleCreate = async () => {
-    if (!session?.access_token || creating) return;
-    if (!name.trim()) {
-      setError("Organization name is required");
-      return;
-    }
-
-    setError(null);
-    setSuccess(null);
-    setCreating(true);
+    if (!name.trim() || createMutation.isPending) return;
 
     try {
-      const data = await api.createOrganization(session.access_token, {
+      await createMutation.mutateAsync({
         name: name.trim(),
         organization_type: orgType,
       });
-      setOrganizations((prev) => [...prev, data]);
       setName("");
       setOrgType("business");
       setShowCreateModal(false);
-      setSuccess(`${orgType === "business" ? "Business" : "Cooperative"} created successfully!`);
     } catch (err: any) {
-      setError(err.message || "Failed to create organization");
-    } finally {
-      setCreating(false);
+      console.error('Failed to create organization:', err);
     }
   };
 
-  if (authLoading || loading) {
+  // Show loading during auth check or initial fetch
+  if (authLoading || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-cream">
-        <Loader2 className="h-8 w-8 animate-spin text-plum" />
-      </div>
+      <PageWrapper
+        isLoading
+        loadingText="Loading organizations..."
+        className="min-h-screen bg-cream py-12 px-4"
+      />
+    );
+  }
+
+  // Show auth error or redirect to login
+  if (error) {
+    if (error.status === 401) {
+      navigate("/login");
+      return null;
+    }
+    return (
+      <PageWrapper
+        error={{ type: 'unknown', message: error.message || 'Failed to load organizations' }}
+        onRetry={() => refetch()}
+        className="min-h-screen bg-cream py-12 px-4"
+      />
     );
   }
 
@@ -88,7 +70,7 @@ export function Organizations() {
   };
 
   return (
-    <div className="min-h-screen bg-cream py-12 px-4">
+    <PageWrapper className="min-h-screen bg-cream py-12 px-4">
       <div className="mx-auto max-w-4xl">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -104,16 +86,16 @@ export function Organizations() {
           </Button>
         </div>
 
-        {error && (
+        {createMutation.isError && (
           <div className="mb-6 flex items-center gap-2 text-sm text-rose-600 bg-rose-50 rounded-lg p-3">
             <AlertCircle size={16} />
-            <span>{error}</span>
+            <span>{createMutation.error?.message || 'Failed to create organization'}</span>
           </div>
         )}
-        {success && (
+        {createMutation.isSuccess && (
           <div className="mb-6 flex items-center gap-2 text-sm text-emerald-600 bg-emerald-50 rounded-lg p-3">
             <CheckCircle size={16} />
-            <span>{success}</span>
+            <span>{orgType === "business" ? "Business" : "Cooperative"} created successfully!</span>
           </div>
         )}
 
@@ -203,9 +185,9 @@ export function Organizations() {
                   <label className="block text-sm font-medium text-ink">Name <span className="text-rose-500">*</span></label>
                   <Input
                     value={name}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
+                    onChange={(e) => setName(e.target.value)}
                     placeholder="e.g., Smith Plumbing Co."
-                    disabled={creating}
+                    disabled={createMutation.isPending}
                   />
                 </div>
 
@@ -250,23 +232,23 @@ export function Organizations() {
                   </div>
                 </div>
 
-                {error && (
+                {createMutation.isError && (
                   <div className="flex items-center gap-2 text-sm text-rose-600 bg-rose-50 rounded-lg p-3">
                     <AlertCircle size={16} />
-                    <span>{error}</span>
+                    <span>{createMutation.error?.message || 'Failed to create organization'}</span>
                   </div>
                 )}
 
                 <div className="flex gap-3 pt-2">
                   <Button
                     onClick={() => setShowCreateModal(false)}
-                    disabled={creating}
+                    disabled={createMutation.isPending}
                     className="flex-1 border border-ink/10 bg-white text-ink/60 hover:bg-ink/5"
                   >
                     Cancel
                   </Button>
-                  <Button onClick={handleCreate} disabled={creating || !name.trim()} className="flex-1">
-                    {creating ? (
+                  <Button onClick={handleCreate} disabled={createMutation.isPending || !name.trim()} className="flex-1">
+                    {createMutation.isPending ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Creating...
@@ -281,6 +263,6 @@ export function Organizations() {
           </div>
         )}
       </div>
-    </div>
+    </PageWrapper>
   );
 }

@@ -2,12 +2,13 @@ import { Briefcase, Loader2, Save, AlertCircle, CheckCircle, Info } from "lucide
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
-import { api, type WorkerProfile } from "@/lib/api";
+import { useWorkerProfile, useCreateWorkerProfile, useUpdateWorkerProfile } from "@/hooks/useApi";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import { PageWrapper, EmptyState, ErrorState } from "@/components/ui/States";
 
-type OnboardingStatus = WorkerProfile["onboarding_status"];
+type OnboardingStatus = 'draft' | 'pending_review' | 'approved' | 'restricted';
 
 const statusInfo: Record<OnboardingStatus, { label: string; color: string; bg: string; description: string }> = {
   draft: {
@@ -39,111 +40,85 @@ const statusInfo: Record<OnboardingStatus, { label: string; color: string; bg: s
 export function Earn() {
   const navigate = useNavigate();
   const { session, loading: authLoading } = useAuth();
-  const [profile, setProfile] = useState<WorkerProfile | null>(null);
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [hasProfile, setHasProfile] = useState(false);
 
+  const { data: profile, isLoading, error, refetch, isError } = useWorkerProfile({
+    enabled: !!session?.access_token && !authLoading,
+  });
+
+  const createMutation = useCreateWorkerProfile();
+  const updateMutation = useUpdateWorkerProfile();
+
+  // Sync form state with profile data
   useEffect(() => {
-    async function loadProfile() {
-      if (!session?.access_token) {
-        navigate("/login");
-        return;
-      }
-
-      try {
-        const data = await api.getMyWorkerProfile(session.access_token);
-        setProfile(data);
-        setDisplayName(data.display_name);
-        setBio(data.bio ?? "");
-        setHasProfile(true);
-      } catch (err: any) {
-        if (err.status === 404) {
-          setHasProfile(false);
-        } else if (err.status === 401) {
-          navigate("/login");
-        } else {
-          setError("Failed to load worker profile");
-        }
-      } finally {
-        setLoading(false);
-      }
+    if (profile) {
+      setDisplayName(profile.display_name);
+      setBio(profile.bio ?? "");
     }
-
-    if (!authLoading) {
-      loadProfile();
-    }
-  }, [authLoading, session, navigate]);
+  }, [profile]);
 
   const handleCreate = async () => {
-    if (!session?.access_token || saving) return;
-    if (!displayName.trim()) {
-      setError("Display name is required");
-      return;
-    }
-
-    setError(null);
-    setSuccess(null);
-    setSaving(true);
+    if (!displayName.trim() || createMutation.isPending) return;
 
     try {
-      const data = await api.createWorkerProfile(session.access_token, {
+      await createMutation.mutateAsync({
         display_name: displayName,
         bio: bio.trim() || undefined,
       });
-      setProfile(data);
-      setDisplayName(data.display_name);
-      setBio(data.bio ?? "");
-      setHasProfile(true);
-      setSuccess("Worker profile created! Status: Draft");
     } catch (err: any) {
-      if (err.status === 409) {
-        setError("You already have a worker profile");
-      } else {
-        setError(err.message || "Failed to create worker profile");
-      }
-    } finally {
-      setSaving(false);
+      console.error('Failed to create worker profile:', err);
     }
   };
 
   const handleUpdate = async () => {
-    if (!session?.access_token || !profile || saving) return;
-
-    setError(null);
-    setSuccess(null);
-    setSaving(true);
+    if (!profile || updateMutation.isPending) return;
 
     try {
-      const data = await api.updateMyWorkerProfile(session.access_token, {
+      await updateMutation.mutateAsync({
         display_name: displayName.trim() || undefined,
         bio: bio.trim() || undefined,
       });
-      setProfile(data);
-      setDisplayName(data.display_name);
-      setBio(data.bio ?? "");
-      setSuccess("Profile updated successfully");
     } catch (err: any) {
-      setError(err.message || "Failed to update profile");
-    } finally {
-      setSaving(false);
+      console.error('Failed to update profile:', err);
     }
   };
 
-  if (authLoading || loading) {
+  // Show loading during auth check or initial fetch
+  if (authLoading || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-cream">
-        <Loader2 className="h-8 w-8 animate-spin text-plum" />
-      </div>
+      <PageWrapper
+        isLoading
+        loadingText="Loading worker profile..."
+        className="min-h-screen bg-cream py-12 px-4"
+      />
     );
   }
 
+  // Show auth error or redirect to login
+  if (isError && error) {
+    if (error.status === 401) {
+      navigate("/login");
+      return null;
+    }
+    if (error.status === 404) {
+      // Profile doesn't exist - this is fine, show create form
+      // We'll render the create form below
+    } else {
+      return (
+        <PageWrapper
+          error={{ type: 'unknown', message: error.message || 'Failed to load worker profile' }}
+          onRetry={() => refetch()}
+          className="min-h-screen bg-cream py-12 px-4"
+        />
+      );
+    }
+  }
+
+  const hasProfile = !!profile;
+
   return (
-    <div className="min-h-screen bg-cream py-12 px-4">
+    <PageWrapper className="min-h-screen bg-cream py-12 px-4">
       <div className="mx-auto max-w-2xl">
         <div className="mb-6">
           <h1 className="text-3xl font-black text-ink flex items-center gap-2">
@@ -191,9 +166,9 @@ export function Earn() {
                   <Input
                     id="displayName"
                     value={displayName}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDisplayName(e.target.value)}
+                    onChange={(e) => setDisplayName(e.target.value)}
                     placeholder="How customers will see you"
-                    disabled={saving}
+                    disabled={createMutation.isPending}
                     required
                   />
                 </div>
@@ -205,29 +180,29 @@ export function Earn() {
                   <textarea
                     id="bio"
                     value={bio}
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setBio(e.target.value)}
+                    onChange={(e) => setBio(e.target.value)}
                     placeholder="Tell customers about your skills, experience, and what you offer..."
                     rows={4}
                     className="w-full rounded-lg border border-ink/15 bg-white px-4 py-3 text-sm focus:border-plum focus:outline-none focus:ring-2 focus:ring-plum/20 disabled:opacity-50"
-                    disabled={saving}
+                    disabled={createMutation.isPending}
                   />
                 </div>
 
-                {error && (
+                {createMutation.isError && (
                   <div className="flex items-center gap-2 text-sm text-rose-600 bg-rose-50 rounded-lg p-3">
                     <AlertCircle size={16} />
-                    <span>{error}</span>
+                    <span>{createMutation.error?.message || 'Failed to create worker profile'}</span>
                   </div>
                 )}
-                {success && (
+                {createMutation.isSuccess && (
                   <div className="flex items-center gap-2 text-sm text-emerald-600 bg-emerald-50 rounded-lg p-3">
                     <CheckCircle size={16} />
-                    <span>{success}</span>
+                    <span>Worker profile created! Status: Draft</span>
                   </div>
                 )}
 
-                <Button onClick={handleCreate} disabled={saving || !displayName.trim()} className="w-full">
-                  {saving ? (
+                <Button onClick={handleCreate} disabled={createMutation.isPending || !displayName.trim()} className="w-full">
+                  {createMutation.isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Creating...
@@ -253,9 +228,9 @@ export function Earn() {
                   <Input
                     id="displayName"
                     value={displayName}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDisplayName(e.target.value)}
+                    onChange={(e) => setDisplayName(e.target.value)}
                     placeholder="How customers will see you"
-                    disabled={saving}
+                    disabled={updateMutation.isPending}
                     required
                   />
                 </div>
@@ -267,29 +242,29 @@ export function Earn() {
                   <textarea
                     id="bio"
                     value={bio}
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setBio(e.target.value)}
+                    onChange={(e) => setBio(e.target.value)}
                     placeholder="Tell customers about your skills, experience, and what you offer..."
                     rows={4}
                     className="w-full rounded-lg border border-ink/15 bg-white px-4 py-3 text-sm focus:border-plum focus:outline-none focus:ring-2 focus:ring-plum/20 disabled:opacity-50"
-                    disabled={saving}
+                    disabled={updateMutation.isPending}
                   />
                 </div>
 
-                {error && (
+                {updateMutation.isError && (
                   <div className="flex items-center gap-2 text-sm text-rose-600 bg-rose-50 rounded-lg p-3">
                     <AlertCircle size={16} />
-                    <span>{error}</span>
+                    <span>{updateMutation.error?.message || 'Failed to update profile'}</span>
                   </div>
                 )}
-                {success && (
+                {updateMutation.isSuccess && (
                   <div className="flex items-center gap-2 text-sm text-emerald-600 bg-emerald-50 rounded-lg p-3">
                     <CheckCircle size={16} />
-                    <span>{success}</span>
+                    <span>Profile updated successfully</span>
                   </div>
                 )}
 
-                <Button onClick={handleUpdate} disabled={saving} className="w-full">
-                  {saving ? (
+                <Button onClick={handleUpdate} disabled={updateMutation.isPending} className="w-full">
+                  {updateMutation.isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Saving...
@@ -312,6 +287,6 @@ export function Earn() {
           </button>
         </div>
       </div>
-    </div>
+    </PageWrapper>
   );
 }

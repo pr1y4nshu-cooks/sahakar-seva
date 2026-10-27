@@ -1,8 +1,7 @@
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { ArrowUpRight, Menu, LogOut, User, Briefcase, Building2 } from "lucide-react";
-import { useAuth } from "../../lib/auth";
-import { useQuery } from "@tanstack/react-query";
-import { api } from "../../lib/api";
+import { useAuth } from "@/lib/auth";
+import { DevBadge } from "@/components/ui/DevBadge";
 
 const publicLinks = [["/hire", "Hire"], ["/find-work", "Find Work"]];
 const authLinks = [
@@ -11,13 +10,8 @@ const authLinks = [
   { to: "/profile", label: "Profile", Icon: User },
 ];
 
-// SET TO `true` TO ENABLE DEVELOPMENT STATUS BUBBLE, `false` TO DISABLE
-const SHOW_DEV_STATUS = false;
-
 export function Layout() {
   const { user, session, loading: authLoading, signOut } = useAuth();
-  const apiQuery = useQuery({ queryKey: ["health"], queryFn: api.health, retry: false });
-  const dbQuery = useQuery({ queryKey: ["db-health"], queryFn: api.databaseHealth, retry: false });
 
   const handleSignOut = async () => {
     await signOut();
@@ -62,13 +56,7 @@ export function Layout() {
       <footer className="mx-auto mt-20 flex max-w-6xl flex-col gap-3 border-t border-[#eee8f2] px-5 py-8 text-sm text-ink/50 md:flex-row md:items-center md:justify-between lg:px-8">
         <span>Built for fair, local opportunity.</span><span>Phase 2 foundation · <ArrowUpRight className="inline" size={14} /> Identity & Profiles</span>
       </footer>
-      {SHOW_DEV_STATUS && (
-        <div className="fixed bottom-4 right-4 hidden rounded-2xl border border-[#e9e3f0] bg-white p-3 text-xs shadow-lg sm:block">
-          <div className="mb-1 font-semibold text-ink">Development status</div>
-          <div className="flex gap-3 text-ink/60"><span title="Frontend application is running"><i className="mr-1 inline-block h-2 w-2 rounded-full bg-emerald-500" />Frontend</span><span title={apiQuery.isError ? "Backend API unavailable" : "Backend API connected"}><i className={`mr-1 inline-block h-2 w-2 rounded-full ${apiQuery.isSuccess ? "bg-emerald-500" : "bg-rose-400"}`} />API</span><span title={dbQuery.isError ? "Database unavailable" : "Database connected"}><i className={`mr-1 inline-block h-2 w-2 rounded-full ${dbQuery.isSuccess ? "bg-emerald-500" : "bg-rose-400"}`} />PostgreSQL</span></div>
-          {user && <div className="mt-2 flex items-center gap-2 text-xs text-plum"><User size={10} />Signed in as {user.email}</div>}
-        </div>
-      )}
+      <DevBadge />
     </div>
   );
 }
