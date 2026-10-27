@@ -35,7 +35,13 @@ let state: FixtureState = {
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Simulated token validation
-function validateToken(token: string | undefined): { valid: boolean; userId: string } {
+interface TokenValidationResult {
+  valid: boolean;
+  userId: string;
+  forbidden?: boolean;
+}
+
+function validateToken(token: string | undefined): TokenValidationResult {
   if (!token) {
     return { valid: false, userId: '' };
   }
@@ -45,7 +51,7 @@ function validateToken(token: string | undefined): { valid: boolean; userId: str
     return { valid: false, userId: '' };
   }
   if (token === 'forbidden-token') {
-    return { valid: true, userId: 'other-user-id' };
+    return { valid: false, userId: '', forbidden: true };
   }
 
   // Valid tokens start with "valid-"
@@ -74,10 +80,15 @@ export const fixtures = {
     getCurrent: async (token?: string): Promise<User> => {
       await delay(200);
 
-      const { valid, userId } = validateToken(token);
-      if (!valid) {
+      const validation = validateToken(token);
+      if (!validation.valid) {
+        if (validation.forbidden) {
+          // For forbidden token, we still throw 401 (simulating 403 behavior)
+          throw new AuthError('Forbidden: token belongs to different user', 403);
+        }
         throw new AuthError('Missing or invalid bearer token', 401);
       }
+      const userId = validation.userId;
 
       // Return existing user or create new one
       if (!state.currentUser || state.currentUser.id !== userId) {
@@ -126,10 +137,15 @@ export const fixtures = {
     create: async (data: { display_name: string; bio?: string | null }, token?: string): Promise<WorkerProfile> => {
       await delay(300);
 
-      const { valid, userId } = validateToken(token);
-      if (!valid) {
+      const validation = validateToken(token);
+      if (!validation.valid) {
+        if (validation.forbidden) {
+          // For forbidden token, we still throw 401 (simulating 403 behavior)
+          throw new AuthError('Forbidden: token belongs to different user', 403);
+        }
         throw new AuthError('Missing or invalid bearer token', 401);
       }
+      const userId = validation.userId;
 
       if (!data.display_name || data.display_name.trim().length < 2) {
         throw new ValidationError('display_name must be at least 2 characters');
@@ -162,10 +178,15 @@ export const fixtures = {
     getMine: async (token?: string): Promise<WorkerProfile> => {
       await delay(200);
 
-      const { valid, userId } = validateToken(token);
-      if (!valid) {
+      const validation = validateToken(token);
+      if (!validation.valid) {
+        if (validation.forbidden) {
+          // For forbidden token, we still throw 401 (simulating 403 behavior)
+          throw new AuthError('Forbidden: token belongs to different user', 403);
+        }
         throw new AuthError('Missing or invalid bearer token', 401);
       }
+      const userId = validation.userId;
 
       if (!state.workerProfile || state.workerProfile.user_id !== userId) {
         throw new NotFoundError('Worker profile not found');
@@ -177,10 +198,15 @@ export const fixtures = {
     update: async (data: { display_name?: string; bio?: string | null }, token?: string): Promise<WorkerProfile> => {
       await delay(300);
 
-      const { valid, userId } = validateToken(token);
-      if (!valid) {
+      const validation = validateToken(token);
+      if (!validation.valid) {
+        if (validation.forbidden) {
+          // For forbidden token, we still throw 401 (simulating 403 behavior)
+          throw new AuthError('Forbidden: token belongs to different user', 403);
+        }
         throw new AuthError('Missing or invalid bearer token', 401);
       }
+      const userId = validation.userId;
 
       if (!state.workerProfile || state.workerProfile.user_id !== userId) {
         throw new NotFoundError('Worker profile not found');
@@ -212,10 +238,15 @@ export const fixtures = {
     create: async (data: { name: string; organization_type: 'business' | 'cooperative' }, token?: string): Promise<OrganizationWithMyRole> => {
       await delay(400);
 
-      const { valid, userId } = validateToken(token);
-      if (!valid) {
+      const validation = validateToken(token);
+      if (!validation.valid) {
+        if (validation.forbidden) {
+          // For forbidden token, we still throw 401 (simulating 403 behavior)
+          throw new AuthError('Forbidden: token belongs to different user', 403);
+        }
         throw new AuthError('Missing or invalid bearer token', 401);
       }
+      const userId = validation.userId;
 
       if (!data.name || data.name.trim().length < 2) {
         throw new ValidationError('name must be at least 2 characters');

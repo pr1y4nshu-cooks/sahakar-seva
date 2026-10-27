@@ -31,7 +31,7 @@ export function Loading({ size = 'md', text = 'Loading...', fullScreen = false }
     : 'flex flex-col items-center justify-center py-12';
 
   return (
-    <div className={containerClasses}>
+    <div className={containerClasses} role="status" aria-live="polite">
       <Loader2 className={`${sizeClasses[size]} animate-spin text-plum`} aria-hidden="true" />
       {text && <p className="mt-3 text-sm text-ink/60">{text}</p>}
     </div>
