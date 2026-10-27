@@ -79,7 +79,13 @@ The API integration tests use `TEST_DATABASE_URL` when supplied and otherwise ta
 
 ## Configuration
 
-Copy `.env.example` to `.env`. The API reads `DATABASE_URL`, `ALLOWED_ORIGINS`, and host/port settings. Supabase settings are intentionally optional placeholders; Phase 1 does not implement authentication.
+Copy `.env.example` to `.env`. The API reads `DATABASE_URL`, `ALLOWED_ORIGINS` (comma-separated exact origins; `*` is rejected), and host/port settings.
+
+Authentication (Phase 2): the API verifies Supabase bearer tokens with `SUPABASE_JWT_SECRET` (HS256, legacy shared-secret projects) or `SUPABASE_URL` + `SUPABASE_ANON_KEY` (server-side `/auth/v1/user` validation). With neither configured, protected endpoints fail closed with `503 AUTH_NOT_CONFIGURED`. These are server-only values; Compose passes them to the `api` container from the root `.env`.
+
+Frontend: copy `apps/web/.env.example` to `apps/web/.env.local` and set `VITE_API_BASE_URL`, `VITE_SUPABASE_URL`, and `VITE_SUPABASE_ANON_KEY` (public anon/publishable key only — never a service-role or JWT secret).
+
+After changing backend dependencies in `services/api/pyproject.toml`, rebuild the API image: `docker compose build api && docker compose up -d api`.
 
 ## Architecture boundary
 

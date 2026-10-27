@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.api.v1.error_handler import ContractCompliantRoute
+from app.api.v1.responses import error_responses
 from app.core.security import VerifiedUser, get_current_verified_user
 from app.db.session import get_db
 from app.schemas.user import UserRead, UserUpdate
@@ -15,6 +16,7 @@ router = APIRouter(prefix="/users", tags=["users"], route_class=ContractComplian
     response_model=UserRead,
     status_code=status.HTTP_200_OK,
     summary="Get current user profile (idempotently syncs user with verified provider identity)",
+    responses=error_responses(401, 409, 503),
 )
 def get_current_user_profile(
     verified_user: VerifiedUser = Depends(get_current_verified_user),
@@ -29,6 +31,7 @@ def get_current_user_profile(
     response_model=UserRead,
     status_code=status.HTTP_200_OK,
     summary="Update current user display name",
+    responses=error_responses(401, 422, 503),
 )
 def update_current_user_profile(
     payload: UserUpdate,

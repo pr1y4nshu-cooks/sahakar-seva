@@ -22,6 +22,10 @@ services:
       APP_ENV: ${APP_ENV:-development}
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-sahakar}:${POSTGRES_PASSWORD:-sahakar}@db:5432/${POSTGRES_DB:-sahakar_seva}
       ALLOWED_ORIGINS: http://localhost:5173,http://localhost:4173
+      # Server-only auth verification settings, read from the root .env (blank -> fail closed with 503)
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-}
+      SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-}
     ports:
       - "8000:8000"
     volumes:

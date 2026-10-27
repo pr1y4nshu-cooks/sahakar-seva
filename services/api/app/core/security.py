@@ -80,7 +80,8 @@ def verify_token_against_supabase(token: str) -> VerifiedUser:
     3. Fails closed (503) if network/provider is unavailable or unconfigured.
     """
     settings = get_settings()
-    jwt_secret = os.getenv("SUPABASE_JWT_SECRET")
+    # Process environment takes precedence; Settings also picks the value up from the .env file.
+    jwt_secret = os.getenv("SUPABASE_JWT_SECRET") or settings.supabase_jwt_secret
 
     # Mode A: Shared secret / HS256 cryptographic verification
     if jwt_secret:
