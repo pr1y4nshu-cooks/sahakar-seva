@@ -99,7 +99,7 @@ export function Profile() {
               <Input
                 id="displayName"
                 value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDisplayName(e.target.value)}
                 placeholder="Enter your display name"
                 disabled={saving}
               />
