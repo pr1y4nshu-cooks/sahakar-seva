@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.api.v1.error_handler import ContractCompliantRoute
+from app.api.v1.responses import error_responses
 from app.core.security import VerifiedUser, get_current_verified_user
 from app.db.session import get_db
 from app.schemas.organization import OrganizationCreate, OrganizationWithMyRole
@@ -16,6 +17,7 @@ router = APIRouter(prefix="/organizations", tags=["organizations"], route_class=
     response_model=OrganizationWithMyRole,
     status_code=status.HTTP_201_CREATED,
     summary="Create organization with atomic owner membership",
+    responses=error_responses(401, 422, 503),
 )
 def create_organization(
     payload: OrganizationCreate,
@@ -37,6 +39,7 @@ def create_organization(
     response_model=list[OrganizationWithMyRole],
     status_code=status.HTTP_200_OK,
     summary="List caller's organizations with scoped role",
+    responses=error_responses(401, 503),
 )
 def list_my_organizations(
     verified_user: VerifiedUser = Depends(get_current_verified_user),

@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.api.v1.error_handler import ContractCompliantRoute
+from app.api.v1.responses import error_responses
 from app.core.security import ResourceNotFoundException, VerifiedUser, get_current_verified_user
 from app.db.session import get_db
 from app.schemas.worker import WorkerProfileCreate, WorkerProfileRead, WorkerProfileUpdate
@@ -16,6 +17,7 @@ router = APIRouter(prefix="/worker-profiles", tags=["worker-profiles"], route_cl
     response_model=WorkerProfileRead,
     status_code=status.HTTP_201_CREATED,
     summary="Create initial worker profile (draft status)",
+    responses=error_responses(401, 409, 422, 503),
 )
 def create_worker_profile(
     payload: WorkerProfileCreate,
@@ -37,6 +39,7 @@ def create_worker_profile(
     response_model=WorkerProfileRead,
     status_code=status.HTTP_200_OK,
     summary="Get current user's worker profile",
+    responses=error_responses(401, 404, 503),
 )
 def get_own_worker_profile(
     verified_user: VerifiedUser = Depends(get_current_verified_user),
@@ -54,6 +57,7 @@ def get_own_worker_profile(
     response_model=WorkerProfileRead,
     status_code=status.HTTP_200_OK,
     summary="Update current user's worker profile",
+    responses=error_responses(401, 404, 422, 503),
 )
 def update_own_worker_profile(
     payload: WorkerProfileUpdate,

@@ -101,20 +101,27 @@ def test_organization_isolation_between_users(client: TestClient) -> None:
     app.dependency_overrides.clear()
 
 
-def test_organization_transaction_atomicity(db_session: Session) -> None:
+def test_organization_transaction_atomicity(db_session: Session, monkeypatch) -> None:
     """
     Test that if membership creation fails during organization creation,
     the entire transaction is rolled back and neither the organization nor the
     membership row persists in the database.
+
+    The failure is injected inside the canonical repository (the code path the
+    service now delegates to), after the organization row has been flushed.
     """
     from uuid import uuid4
 
+    import pytest
+
+    from app.repositories import organization_repository
+
     test_user_id = uuid4()
 
-    def simulate_failure():
+    def failing_membership(*args, **kwargs):
         raise RuntimeError("Injected database error during membership creation")
 
-    import pytest
+    monkeypatch.setattr(organization_repository, "OrganizationMembership", failing_membership)
 
     with pytest.raises(RuntimeError):
         OrganizationService.create_organization_with_owner(
@@ -122,7 +129,6 @@ def test_organization_transaction_atomicity(db_session: Session) -> None:
             user_id=test_user_id,
             name="Atomic Org",
             organization_type="business",
-            _membership_failure_hook=simulate_failure,
         )
 
     # Verify that the organization row was NOT committed
@@ -132,3 +138,40 @@ def test_organization_transaction_atomicity(db_session: Session) -> None:
     # Verify that no membership row was committed
     mem_in_db = db_session.scalar(select(OrganizationMembership).where(OrganizationMembership.user_id == test_user_id))
     assert mem_in_db is None
+
+
+def test_organization_api_failure_rolls_back_and_returns_contract_error(
+    client: TestClient, db_session: Session, monkeypatch
+) -> None:
+    """API-level atomicity: injected membership failure -> 500 INTERNAL_ERROR, zero orgs persisted."""
+    from app.repositories import organization_repository
+
+    app.dependency_overrides[get_token_verifier] = lambda: lambda t: VerifiedUser(
+        sub="sub_org_atomic_api", email="atomic_api@example.com", display_name_hint="Atomic"
+    )
+    headers = {"Authorization": "Bearer atomic"}
+    try:
+        # Sync the user first so only the organization insert is under test
+        assert client.get("/api/v1/users/me", headers=headers).status_code == 200
+
+        def failing_membership(*args, **kwargs):
+            raise RuntimeError("simulated failure with secret-ish detail")
+
+        monkeypatch.setattr(organization_repository, "OrganizationMembership", failing_membership)
+        resp = client.post(
+            "/api/v1/organizations",
+            json={"name": "Never Persisted Org", "organization_type": "cooperative"},
+            headers=headers,
+        )
+        assert resp.status_code == 500
+        assert resp.json() == {
+            "error": {"code": "INTERNAL_ERROR", "message": "An unexpected server error occurred."}
+        }
+        monkeypatch.undo()
+
+        assert db_session.scalar(select(Organization).where(Organization.name == "Never Persisted Org")) is None
+        listing = client.get("/api/v1/organizations/mine", headers=headers)
+        assert listing.status_code == 200
+        assert listing.json() == []
+    finally:
+        app.dependency_overrides.clear()

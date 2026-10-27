@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -21,22 +21,41 @@ from app.main import app
 
 @pytest.fixture(scope="session")
 def test_engine():
-    """Create in-memory SQLite database supporting multi-threaded tests."""
+    """Create in-memory SQLite database supporting multi-threaded tests.
+
+    pysqlite's legacy transaction handling breaks SAVEPOINT semantics (a RELEASE can commit
+    for real), which the canonical repositories rely on via ``Session.begin_nested()``.
+    Apply SQLAlchemy's documented recipe so BEGIN/SAVEPOINT behave like PostgreSQL:
+    https://docs.sqlalchemy.org/en/20/dialects/sqlite.html#serializable-isolation-savepoints-transactional-ddl
+    """
     engine = create_engine(
         "sqlite:///:memory:",
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
+
+    @event.listens_for(engine, "connect")
+    def _disable_pysqlite_autobegin(dbapi_connection, connection_record):
+        dbapi_connection.isolation_level = None
+
+    @event.listens_for(engine, "begin")
+    def _emit_begin(conn):
+        conn.exec_driver_sql("BEGIN")
+
     Base.metadata.create_all(bind=engine)
     return engine
 
 
 @pytest.fixture
 def db_session(test_engine) -> Generator[Session, None, None]:
-    """Provide a clean transactional session for each test."""
+    """Provide a clean transactional session for each test.
+
+    ``join_transaction_mode="create_savepoint"`` makes commits/rollbacks issued by the code under
+    test operate on a SAVEPOINT, so the outer transaction is always rolled back after the test.
+    """
     connection = test_engine.connect()
     transaction = connection.begin()
-    session = Session(bind=connection)
+    session = Session(bind=connection, join_transaction_mode="create_savepoint")
 
     yield session
 
