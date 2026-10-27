@@ -75,7 +75,24 @@ npm run typecheck
 npm run build
 ```
 
-The API integration tests use `TEST_DATABASE_URL` when supplied and otherwise target the local development database. Ensure PostgreSQL is running before running database tests.
+### Database tests (isolated test database)
+
+Database integration tests (`services/api/tests/db`) run **only** against a separate test database set in `TEST_DATABASE_URL`. They never fall back to the development database. They refuse any URL whose database name lacks `test` or that matches `DATABASE_URL`, and they roll back every test's data. Create the test database once (it is idempotent, and leaves the dev DB and volume untouched):
+
+```bash
+docker compose up -d db
+sh services/api/scripts/create_test_database.sh
+
+cd services/api
+export TEST_DATABASE_URL=postgresql+psycopg://sahakar_test:sahakar_test@localhost:55432/sahakar_seva_test
+pytest                       # all tests; tests/db fail clearly if TEST_DATABASE_URL is unset
+```
+
+Inside Docker: `docker compose exec -e TEST_DATABASE_URL=postgresql+psycopg://sahakar_test:sahakar_test@db:5432/sahakar_seva_test api python -m pytest tests/`. The API tests (`tests/api`) use in-memory SQLite and need no database.
+
+### Seed data (Phase 3A service taxonomy)
+
+After `alembic upgrade head`, run `python -m app.db.seed` from `services/api` (or `docker compose exec api python -m app.db.seed`). It inserts the initial low-risk categories and skills, is safe to re-run, and never modifies existing rows or user data. Use `--dry-run` to preview. See `docs/contracts/PHASE_3A_DATA_CONTRACT.md`.
 
 ## Configuration
 

@@ -13,4 +13,8 @@ def client() -> TestClient:
 
 @pytest.fixture
 def database_url() -> str:
-    return os.getenv("TEST_DATABASE_URL", os.getenv("DATABASE_URL", "postgresql+psycopg://sahakar:sahakar@localhost:55432/sahakar_seva"))
+    """Isolated test database URL only; never falls back to the development DATABASE_URL."""
+    url = os.getenv("TEST_DATABASE_URL")
+    if not url:
+        pytest.fail("TEST_DATABASE_URL is not set; refusing to fall back to the development database.", pytrace=False)
+    return url

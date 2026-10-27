@@ -23,3 +23,26 @@ class WorkerProfileNotFoundError(RepositoryError):
 
 class OrganizationNotFoundError(RepositoryError):
     """Raised when an organization is not found."""
+
+
+# --- Phase 3A: service taxonomy -------------------------------------------------------
+
+
+class ServiceCategoryNotFoundError(RepositoryError):
+    """Raised when a service category is not found."""
+
+
+class SkillNotFoundError(RepositoryError):
+    """Raised when a skill does not exist."""
+
+
+class SkillInactiveError(RepositoryError):
+    """Raised when a worker tries to declare a skill that is inactive or in an inactive category."""
+
+
+class WorkerSkillExistsError(RepositoryError):
+    """Raised when a worker has already declared the given skill."""
+
+
+class WorkerSkillNotFoundError(RepositoryError):
+    """Raised when removing a skill the worker has not declared."""
