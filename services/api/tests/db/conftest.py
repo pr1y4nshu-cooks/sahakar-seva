@@ -60,6 +60,14 @@ _LEAK_CHECK_TABLES = (
     "disputes",
     "platform_reviewers",
     "audit_events",
+    "financial_events",
+    "price_quote_versions",
+    "quote_acceptances",
+    "financial_ledger_transactions",
+    "financial_ledger_entries",
+    "anchor_checkpoints",
+    "fee_policies",
+    "demo_seed_records",
 )
 
 

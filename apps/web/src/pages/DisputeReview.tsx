@@ -4,7 +4,7 @@ import { Scale } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { EmptyState, ErrorState, Loading } from '@/components/ui/States';
-import { errorMessage, marketplace, rupees, when, type DisputeQueueItem } from '@/lib/marketplace';
+import { DISPUTE_CATEGORIES, errorMessage, marketplace, rupees, when, type DisputeQueueItem } from '@/lib/marketplace';
 import { Alert, Field, Select, StatusPill, TextArea } from '@/components/marketplace/common';
 
 export function DisputeReview() {
@@ -29,8 +29,9 @@ function DisputeCard({ item: d }: { item: DisputeQueueItem }) {
   const qc = useQueryClient();
   const [outcome, setOutcome] = useState('no_fault');
   const [reason, setReason] = useState('');
+  const [correction, setCorrection] = useState<'none' | 'full_reversal'>('none');
   const resolve = useMutation({
-    mutationFn: () => marketplace.resolveDispute(d.id, outcome, reason),
+    mutationFn: () => marketplace.resolveDispute(d.id, outcome, reason, correction),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['review-queue'] }),
   });
   return (
@@ -43,6 +44,14 @@ function DisputeCard({ item: d }: { item: DisputeQueueItem }) {
         <StatusPill status={d.status} />
       </div>
       <p className="rounded-xl bg-ink/5 p-3 text-sm">“{d.description}”</p>
+      {d.category && (
+        <p className="text-xs text-ink/60">
+          Category: {DISPUTE_CATEGORIES.find(([k]) => k === d.category)?.[1] ?? d.category}
+          {d.related_quote_version ? ` · quote v${d.related_quote_version}` : ''}
+          {d.has_simulated_settlement ? ' · simulated settlement posted' : ' · no settlement yet'}
+        </p>
+      )}
+      {d.ledger_correction === 'full_reversal' && <Alert kind="info">A full reversal of the simulated settlement was recorded. The original entries remain in the ledger.</Alert>}
       {d.status === 'resolved' && (
         <Alert kind="success">Outcome: <strong>{d.outcome?.replace(/_/g, ' ')}</strong> — {d.resolution_reason}</Alert>
       )}
@@ -59,6 +68,14 @@ function DisputeCard({ item: d }: { item: DisputeQueueItem }) {
           <Field label="Reason (recorded and shown to both parties)" htmlFor={`why-${d.id}`}>
             <TextArea id={`why-${d.id}`} value={reason} onChange={(e) => setReason(e.target.value)} minLength={10} required />
           </Field>
+          {d.has_simulated_settlement && (
+            <Field label="Ledger correction" htmlFor={`corr-${d.id}`}>
+              <Select id={`corr-${d.id}`} value={correction} onChange={(e) => setCorrection(e.target.value as 'none' | 'full_reversal')}>
+                <option value="none">No change to the recorded settlement</option>
+                <option value="full_reversal">Record a full reversal (new reversing entries; history kept)</option>
+              </Select>
+            </Field>
+          )}
           {resolve.isError && <Alert kind="error">{errorMessage(resolve.error)}</Alert>}
           <Button type="submit" disabled={reason.trim().length < 10 || resolve.isPending}>Record decision</Button>
         </form>

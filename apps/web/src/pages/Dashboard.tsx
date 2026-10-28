@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { useMyOrganizations, useWorkerProfile } from "@/hooks/useApi";
 import { Card } from "@/components/ui/Card";
 import { PageWrapper } from "@/components/ui/States";
+import { DashboardActivity } from "@/components/trust/DashboardActivity";
 import type { WorkerProfile, OrganizationWithMyRole } from "@/types/api";
 
 export function Dashboard() {
@@ -97,6 +98,8 @@ export function Dashboard() {
             <p className="text-sm text-ink/60">Organizations</p>
           </Card>
         </div>
+
+        <DashboardActivity />
 
         {/* Navigation Cards */}
         <div className="grid gap-4 md:grid-cols-2 mb-8">

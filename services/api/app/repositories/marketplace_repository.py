@@ -37,6 +37,7 @@ _SEARCH_WORKERS = text(
             AND (CAST(:skill_id AS uuid) IS NULL OR s.id = CAST(:skill_id AS uuid))
             AND (CAST(:category_id AS uuid) IS NULL OR c.id = CAST(:category_id AS uuid)))
       AND (CAST(:exclude_user_id AS uuid) IS NULL OR wp.user_id <> CAST(:exclude_user_id AS uuid))
+      AND (NOT CAST(:sample_only AS boolean) OR wp.id IN (SELECT entity_id FROM demo_seed_records WHERE entity_type = 'worker_profile'))
       AND (CAST(:starts_at AS timestamptz) IS NULL OR EXISTS (
           SELECT 1 FROM availability_slots sl
           WHERE sl.worker_profile_id = wp.id AND sl.is_active
@@ -92,6 +93,7 @@ def search_workers(
     starts_at: datetime | None,
     ends_at: datetime | None,
     exclude_user_id: UUID | None,
+    sample_only: bool = False,
 ) -> list[dict[str, Any]]:
     rows = db.execute(
         _SEARCH_WORKERS,
@@ -104,6 +106,7 @@ def search_workers(
             "starts_at": starts_at,
             "ends_at": ends_at,
             "exclude_user_id": exclude_user_id,
+            "sample_only": sample_only,
         },
     ).mappings()
     return [dict(r) for r in rows]

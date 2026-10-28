@@ -21,9 +21,25 @@ class Settings(BaseSettings):
     # Server-only HS256 secret for local token verification (Mode A). Never expose via VITE_* variables.
     supabase_jwt_secret: str | None = None
 
-    # --- Simulated settlement fee policy (pilot assumption, integer basis points) ---
+    # --- ILLUSTRATIVE example inputs only (not pricing) ---
+    # Live pricing comes exclusively from the active row in `fee_policies` (0006), managed with
+    # `python -m app.cli.fee_policy`. These two values are used only by `bootstrap-example`, which activates a
+    # labelled illustrative policy for local development when no policy is active. They are not final pricing.
     platform_fee_bps: int = 1000
     platform_fee_cap_bps: int = 1500
+
+    # --- External RFC 3161 timestamping of ledger checkpoints (0005; optional) ---
+    # Only the 32-byte checkpoint digest and a random nonce are sent. TSA_CA_FILE is the *pinned* trust
+    # anchor used to verify responses; a certificate inside a response is never trusted on its own.
+    tsa_url: str | None = None
+    tsa_name: str | None = None
+    tsa_ca_file: str | None = None
+    tsa_timeout_seconds: float = 15.0
+    anchor_max_attempts: int = 5
+    anchor_retry_base_seconds: int = 30
+    # Background loop in the API process that creates checkpoints and submits them after commit.
+    anchor_worker_enabled: bool = False
+    anchor_worker_interval_seconds: int = 20
 
     # --- Local development identity (never production auth; see MVP_MARKETPLACE_CONTRACT §9) ---
     dev_auth_enabled: bool = False
@@ -46,7 +62,13 @@ class Settings(BaseSettings):
                 raise ValueError("DEV_AUTH_SECRET must be set (at least 32 characters) when dev auth is enabled")
             if not self.dev_auth_passcode or len(self.dev_auth_passcode) < 8:
                 raise ValueError("DEV_AUTH_PASSCODE must be set (at least 8 characters) when dev auth is enabled")
+        if (self.tsa_url and not self.tsa_ca_file) or (self.tsa_ca_file and not self.tsa_url):
+            raise ValueError("TSA_URL and TSA_CA_FILE must be configured together (pinned trust anchor required)")
         return self
+
+    @property
+    def tsa_configured(self) -> bool:
+        return bool(self.tsa_url and self.tsa_ca_file)
 
     @field_validator("allowed_origins", mode="before")
     @classmethod

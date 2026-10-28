@@ -1,0 +1,483 @@
+{
+  "receipt_format": "sahakar-seva/receipt/v1",
+  "generated_at": "2026-10-27T21:23:12.391511Z",
+  "generated_for_role": "customer",
+  "evidence_level": "versioned",
+  "notice": "Payments are SIMULATED. This receipt proves the integrity of the recorded price agreement and its allocations, and (if externally timestamped) that its checkpoint digest existed by the stated time. It does not prove that real money changed hands.",
+  "summary": {
+    "booking_id": "c005dcc8-f228-468a-abc0-c6cf869f168a",
+    "quote_version": 1,
+    "currency": "INR",
+    "service_price_paise": 50000,
+    "customer_total_paise": 50000,
+    "worker_share_paise": 46500,
+    "platform_fee_paise": 3500,
+    "additional_charges_paise": 0,
+    "tax_paise": 0,
+    "fee_bps": 700,
+    "fee_policy_id": "test-policy",
+    "fee_policy_version": "1",
+    "pricing_model": "hybrid",
+    "policy_definition_hash": "25cd915a7ad3c0c5480f655849bc51f872ae40a6348cbfaae5419b569f0fbd1b"
+  },
+  "booking": {
+    "booking_id": "c005dcc8-f228-468a-abc0-c6cf869f168a",
+    "origin": "direct",
+    "status": "completed",
+    "skill_id": "4d597c82-b9c2-44dc-80b6-96848a59f138",
+    "starts_at": "2026-10-30T10:00:00.000000Z",
+    "ends_at": "2026-10-30T12:00:00.000000Z",
+    "repeat_of_booking_id": null
+  },
+  "agreement": {
+    "evidence_level": "versioned",
+    "note": null,
+    "quote_id": "a6ee560e-b034-40db-b9c4-12f2cd507da8",
+    "quote_version": 1,
+    "source": "booking_request",
+    "versions": 1,
+    "service_price_paise": 50000,
+    "customer_total_paise": 50000,
+    "worker_share_paise": 46500,
+    "platform_fee_paise": 3500,
+    "additional_charges_paise": 0,
+    "tax_paise": 0,
+    "taxes_modeled": false,
+    "fee_bps": 700,
+    "fee_policy_id": "test-policy",
+    "fee_policy_version": "1",
+    "currency": "INR",
+    "pricing_model": "hybrid",
+    "policy_definition_hash": "25cd915a7ad3c0c5480f655849bc51f872ae40a6348cbfaae5419b569f0fbd1b",
+    "is_example_policy": true,
+    "policy_label": "Test test-policy (illustrative)",
+    "line_items": [
+      {
+        "amount_paise": 3500,
+        "bearer": "worker",
+        "code": "platform_service_fee",
+        "computed_paise": 3500,
+        "fixed_paise": 1000,
+        "kind": "platform_fee",
+        "label": "Service fee",
+        "max_paise": 4000,
+        "min_paise": null,
+        "percent_bps": 500,
+        "waived_by": null,
+        "description": "5% of the service price + \u20b910 fixed, at most \u20b940; deducted from the worker's payout"
+      },
+      {
+        "amount_paise": 0,
+        "bearer": "customer",
+        "code": "convenience_fee",
+        "computed_paise": 1500,
+        "fixed_paise": 1500,
+        "kind": "platform_fee",
+        "label": "Convenience fee",
+        "max_paise": null,
+        "min_paise": null,
+        "percent_bps": 0,
+        "waived_by": "launch_waiver",
+        "description": "\u20b915 fixed; added to the customer total"
+      },
+      {
+        "amount_paise": 1000,
+        "bearer": "platform",
+        "code": "processing",
+        "computed_paise": 1000,
+        "fixed_paise": 0,
+        "kind": "processing_charge",
+        "label": "Modeled processing",
+        "max_paise": null,
+        "min_paise": null,
+        "percent_bps": 200,
+        "waived_by": null,
+        "description": "2% of the service price; absorbed by the platform"
+      }
+    ],
+    "created_at": "2026-10-27 21:23:12.103504+00:00",
+    "customer_accepted_at": "2026-10-27 21:23:12.103504+00:00",
+    "worker_accepted_at": "2026-10-27 21:23:12.103504+00:00",
+    "awaiting_acceptance_from": null,
+    "matches_booking_snapshot": true,
+    "tax_note": "No taxes are modeled. Displayed totals do not include GST or any other tax.",
+    "processing_note": "Processing charges, if listed, are modeled pass-through costs. No payment processor is connected.",
+    "additional_charges_note": "Processing charges, if listed, are modeled pass-through costs. No payment processor is connected."
+  },
+  "settlement": {
+    "settlement_id": "792267f8-4ab8-4ce2-81e3-4ad71639027b",
+    "gross_paise": 50000,
+    "fee_paise": 3500,
+    "payout_paise": 46500,
+    "is_simulated": true,
+    "label": "SIMULATED PAYMENT \u2014 NO REAL MONEY TRANSFERRED"
+  },
+  "ledger_transaction_ids": [
+    "0e92d52b-d6e0-4348-8f2a-11184c3d1e23"
+  ],
+  "events": [
+    {
+      "sequence": 3,
+      "event_type": "quote_created",
+      "previous_event_hash": "c61da2eca2c7355c0d3aa11206f21e79e7ffa527f53c8c4355813cfe21401f10",
+      "payload": {
+        "actor": {
+          "role": "customer",
+          "user_id": "3bef3bf4-7bd9-4ca0-bbd8-8f91cbca8aec"
+        },
+        "booking_event_index": 0,
+        "booking_id": "c005dcc8-f228-468a-abc0-c6cf869f168a",
+        "booking_previous_event_hash": null,
+        "currency": "INR",
+        "data": {
+          "quote": {
+            "additional_charges_paise": 0,
+            "currency": "INR",
+            "customer_total_paise": 50000,
+            "evaluated_at": "2026-10-27T21:23:12Z",
+            "fee_bps": 700,
+            "fee_cap_bps": 2000,
+            "fee_policy_id": "test-policy",
+            "fee_policy_record_id": "5382a4c6-d69c-4a1e-89fc-9c79a9f56b5c",
+            "fee_policy_version": "1",
+            "for_organization": false,
+            "is_example_policy": true,
+            "line_items": [
+              {
+                "amount_paise": 3500,
+                "bearer": "worker",
+                "code": "platform_service_fee",
+                "computed_paise": 3500,
+                "fixed_paise": 1000,
+                "kind": "platform_fee",
+                "label": "Service fee",
+                "max_paise": 4000,
+                "min_paise": null,
+                "percent_bps": 500,
+                "waived_by": null
+              },
+              {
+                "amount_paise": 0,
+                "bearer": "customer",
+                "code": "convenience_fee",
+                "computed_paise": 1500,
+                "fixed_paise": 1500,
+                "kind": "platform_fee",
+                "label": "Convenience fee",
+                "max_paise": null,
+                "min_paise": null,
+                "percent_bps": 0,
+                "waived_by": "launch_waiver"
+              },
+              {
+                "amount_paise": 1000,
+                "bearer": "platform",
+                "code": "processing",
+                "computed_paise": 1000,
+                "fixed_paise": 0,
+                "kind": "processing_charge",
+                "label": "Modeled processing",
+                "max_paise": null,
+                "min_paise": null,
+                "percent_bps": 200,
+                "waived_by": null
+              }
+            ],
+            "platform_fee_paise": 3500,
+            "policy_definition": {
+              "components": [
+                {
+                  "applies_to_origins": [
+                    "direct",
+                    "job"
+                  ],
+                  "bearer": "worker",
+                  "code": "platform_service_fee",
+                  "fixed_paise": 1000,
+                  "kind": "platform_fee",
+                  "label": "Service fee",
+                  "max_paise": 4000,
+                  "min_paise": null,
+                  "organization_bookings": "any",
+                  "percent_bps": 500
+                },
+                {
+                  "applies_to_origins": [
+                    "direct",
+                    "job"
+                  ],
+                  "bearer": "customer",
+                  "code": "convenience_fee",
+                  "fixed_paise": 1500,
+                  "kind": "platform_fee",
+                  "label": "Convenience fee",
+                  "max_paise": null,
+                  "min_paise": null,
+                  "organization_bookings": "any",
+                  "percent_bps": 0
+                },
+                {
+                  "applies_to_origins": [
+                    "direct",
+                    "job"
+                  ],
+                  "bearer": "platform",
+                  "code": "processing",
+                  "fixed_paise": 0,
+                  "kind": "processing_charge",
+                  "label": "Modeled processing",
+                  "max_paise": null,
+                  "min_paise": null,
+                  "organization_bookings": "any",
+                  "percent_bps": 200
+                }
+              ],
+              "description": "",
+              "format": "sahakar-seva/fee-policy/v1",
+              "is_example": true,
+              "label": "Test test-policy (illustrative)",
+              "max_total_charge_bps": 2000,
+              "promotions": [
+                {
+                  "code": "launch_waiver",
+                  "ends_at": null,
+                  "label": "Launch: no convenience fee",
+                  "max_service_price_paise": null,
+                  "organization_bookings": "any",
+                  "starts_at": null,
+                  "waives": [
+                    "convenience_fee"
+                  ]
+                }
+              ],
+              "subscription_plan_code": null
+            },
+            "policy_definition_hash": "25cd915a7ad3c0c5480f655849bc51f872ae40a6348cbfaae5419b569f0fbd1b",
+            "previous_version": null,
+            "pricing_basis": "worker_hourly_rate_x_slot_minutes",
+            "pricing_model": "hybrid",
+            "quote_id": "a6ee560e-b034-40db-b9c4-12f2cd507da8",
+            "service_price_paise": 50000,
+            "source": "booking_request",
+            "tax_paise": 0,
+            "taxes_modeled": false,
+            "version": 1,
+            "worker_share_paise": 46500
+          },
+          "service": {
+            "duration_minutes": 120,
+            "ends_at": "2026-10-30T12:00:00.000000Z",
+            "origin": "direct",
+            "skill_id": "4d597c82-b9c2-44dc-80b6-96848a59f138",
+            "starts_at": "2026-10-30T10:00:00.000000Z"
+          }
+        },
+        "event_id": "fdbd69f9-4d27-4862-86d8-9df323cf24c3",
+        "event_type": "quote_created",
+        "format": "sahakar-seva/financial-event/v1",
+        "occurred_at": "2026-10-27T21:23:12.305030Z"
+      },
+      "payload_hash": "ea0a480e7203acc48e4f594928674c71b9eccc0c6af2cea3e4a55e6a3f08265a",
+      "event_hash": "3973cf1744ca9326ea82aa06abde6dbe1117752cad31b85b949872693edf483e",
+      "inclusion_proof": null
+    },
+    {
+      "sequence": 4,
+      "event_type": "quote_accepted",
+      "previous_event_hash": "3973cf1744ca9326ea82aa06abde6dbe1117752cad31b85b949872693edf483e",
+      "payload": {
+        "actor": {
+          "role": "customer",
+          "user_id": "3bef3bf4-7bd9-4ca0-bbd8-8f91cbca8aec"
+        },
+        "booking_event_index": 1,
+        "booking_id": "c005dcc8-f228-468a-abc0-c6cf869f168a",
+        "booking_previous_event_hash": "3973cf1744ca9326ea82aa06abde6dbe1117752cad31b85b949872693edf483e",
+        "currency": "INR",
+        "data": {
+          "accepted_by_role": "customer",
+          "customer_total_paise": 50000,
+          "platform_fee_paise": 3500,
+          "quote_event_hash": "3973cf1744ca9326ea82aa06abde6dbe1117752cad31b85b949872693edf483e",
+          "quote_id": "a6ee560e-b034-40db-b9c4-12f2cd507da8",
+          "quote_version": 1,
+          "worker_share_paise": 46500
+        },
+        "event_id": "1bcdc602-6b9c-4670-a3d5-1c6f45336716",
+        "event_type": "quote_accepted",
+        "format": "sahakar-seva/financial-event/v1",
+        "occurred_at": "2026-10-27T21:23:12.309366Z"
+      },
+      "payload_hash": "48daa282f287983af993dfd160745c312df6ccb6f106c50adcdf6ce76bb282e3",
+      "event_hash": "0a98eb66b42d3976d3b939084ebf1a337472c233c18618ed2c3d11591681d7c6",
+      "inclusion_proof": null
+    },
+    {
+      "sequence": 5,
+      "event_type": "quote_accepted",
+      "previous_event_hash": "0a98eb66b42d3976d3b939084ebf1a337472c233c18618ed2c3d11591681d7c6",
+      "payload": {
+        "actor": {
+          "role": "worker",
+          "user_id": "0c514906-5e66-4ac8-98d8-5baf1279b847"
+        },
+        "booking_event_index": 2,
+        "booking_id": "c005dcc8-f228-468a-abc0-c6cf869f168a",
+        "booking_previous_event_hash": "0a98eb66b42d3976d3b939084ebf1a337472c233c18618ed2c3d11591681d7c6",
+        "currency": "INR",
+        "data": {
+          "accepted_by_role": "worker",
+          "customer_total_paise": 50000,
+          "platform_fee_paise": 3500,
+          "quote_event_hash": "3973cf1744ca9326ea82aa06abde6dbe1117752cad31b85b949872693edf483e",
+          "quote_id": "a6ee560e-b034-40db-b9c4-12f2cd507da8",
+          "quote_version": 1,
+          "worker_share_paise": 46500
+        },
+        "event_id": "ca9fcbb0-e7f8-4580-9660-dfe379c33302",
+        "event_type": "quote_accepted",
+        "format": "sahakar-seva/financial-event/v1",
+        "occurred_at": "2026-10-27T21:23:12.333173Z"
+      },
+      "payload_hash": "a202df9d00cab9821086fbc2f2ff5b2e065b92bdba8433dee540e77c50c6c796",
+      "event_hash": "8e62f59f476010d8499dc595c840cfe9f457e3f4f6683f5fc5a555450e269ba3",
+      "inclusion_proof": null
+    },
+    {
+      "sequence": 6,
+      "event_type": "booking_confirmed",
+      "previous_event_hash": "8e62f59f476010d8499dc595c840cfe9f457e3f4f6683f5fc5a555450e269ba3",
+      "payload": {
+        "actor": {
+          "role": "worker",
+          "user_id": "0c514906-5e66-4ac8-98d8-5baf1279b847"
+        },
+        "booking_event_index": 3,
+        "booking_id": "c005dcc8-f228-468a-abc0-c6cf869f168a",
+        "booking_previous_event_hash": "8e62f59f476010d8499dc595c840cfe9f457e3f4f6683f5fc5a555450e269ba3",
+        "currency": "INR",
+        "data": {
+          "quote_id": "a6ee560e-b034-40db-b9c4-12f2cd507da8",
+          "quote_version": 1,
+          "status_from": "requested",
+          "status_to": "confirmed"
+        },
+        "event_id": "8a12c724-f45d-41af-a859-fad8e0eb08d5",
+        "event_type": "booking_confirmed",
+        "format": "sahakar-seva/financial-event/v1",
+        "occurred_at": "2026-10-27T21:23:12.335284Z"
+      },
+      "payload_hash": "47f0fe7a0acb5bff7a37c10dfb316043a6b70f664a2f70a48240ee83e22812d4",
+      "event_hash": "fe9323e51424c682694c10bc3438ffa6943c84e719aee977b4009ea014daa061",
+      "inclusion_proof": null
+    },
+    {
+      "sequence": 7,
+      "event_type": "booking_completed",
+      "previous_event_hash": "fe9323e51424c682694c10bc3438ffa6943c84e719aee977b4009ea014daa061",
+      "payload": {
+        "actor": {
+          "role": "customer",
+          "user_id": "3bef3bf4-7bd9-4ca0-bbd8-8f91cbca8aec"
+        },
+        "booking_event_index": 4,
+        "booking_id": "c005dcc8-f228-468a-abc0-c6cf869f168a",
+        "booking_previous_event_hash": "fe9323e51424c682694c10bc3438ffa6943c84e719aee977b4009ea014daa061",
+        "currency": "INR",
+        "data": {
+          "quote_id": "a6ee560e-b034-40db-b9c4-12f2cd507da8",
+          "quote_version": 1,
+          "status_from": "in_progress",
+          "status_to": "completed"
+        },
+        "event_id": "379cc25b-f3c9-4f01-af57-7006e4794ca1",
+        "event_type": "booking_completed",
+        "format": "sahakar-seva/financial-event/v1",
+        "occurred_at": "2026-10-27T21:23:12.358895Z"
+      },
+      "payload_hash": "3c34c6083d2b96c551d70032af45afcfd8ab9bf3457884b40c403b94f1ab016b",
+      "event_hash": "f560d60f217b989d6934e197cd3ccdbb5f3068387dc9cea8b4baf68d3c5b7be5",
+      "inclusion_proof": null
+    },
+    {
+      "sequence": 8,
+      "event_type": "simulated_settlement_recorded",
+      "previous_event_hash": "f560d60f217b989d6934e197cd3ccdbb5f3068387dc9cea8b4baf68d3c5b7be5",
+      "payload": {
+        "actor": {
+          "role": "customer",
+          "user_id": "3bef3bf4-7bd9-4ca0-bbd8-8f91cbca8aec"
+        },
+        "booking_event_index": 5,
+        "booking_id": "c005dcc8-f228-468a-abc0-c6cf869f168a",
+        "booking_previous_event_hash": "f560d60f217b989d6934e197cd3ccdbb5f3068387dc9cea8b4baf68d3c5b7be5",
+        "currency": "INR",
+        "data": {
+          "gross_paise": 50000,
+          "is_simulated": true,
+          "ledger_transaction": {
+            "amount_paise": 51000,
+            "entries": [
+              {
+                "account": "simulated_customer_payment_clearing",
+                "amount_paise": 50000,
+                "direction": "debit"
+              },
+              {
+                "account": "simulated_platform_promotion_expense",
+                "amount_paise": 1000,
+                "direction": "debit"
+              },
+              {
+                "account": "simulated_worker_entitlement",
+                "amount_paise": 46500,
+                "direction": "credit"
+              },
+              {
+                "account": "simulated_platform_fee_allocation",
+                "amount_paise": 3500,
+                "direction": "credit"
+              },
+              {
+                "account": "simulated_processing_charge_allocation",
+                "amount_paise": 1000,
+                "direction": "credit"
+              }
+            ],
+            "id": "0e92d52b-d6e0-4348-8f2a-11184c3d1e23",
+            "idempotency_key": "booking-settlement:c005dcc8-f228-468a-abc0-c6cf869f168a",
+            "transaction_type": "simulated_booking_settlement"
+          },
+          "platform_fee_paise": 3500,
+          "processing_charge_paise": 0,
+          "quote_id": "a6ee560e-b034-40db-b9c4-12f2cd507da8",
+          "quote_version": 1,
+          "settlement_id": "792267f8-4ab8-4ce2-81e3-4ad71639027b",
+          "worker_share_paise": 46500
+        },
+        "event_id": "38fe4cb8-14f4-4618-a21e-a065b5b5036b",
+        "event_type": "simulated_settlement_recorded",
+        "format": "sahakar-seva/financial-event/v1",
+        "occurred_at": "2026-10-27T21:23:12.362463Z"
+      },
+      "payload_hash": "e446e1ccd302e00da612fedaf1429e414f0982cec3799cca33c05f27bc54f030",
+      "event_hash": "95882dc52eabbe48f02ab3eba10bb8e2e227d3a57f552de916445031f05e16f8",
+      "inclusion_proof": null
+    }
+  ],
+  "checkpoints": [],
+  "hashing": {
+    "canonicalization": "RFC 8785 (JCS); integers only, ASCII keys",
+    "payload_hash": "SHA-256('SAHAKAR-SEVA:financial-event-payload:v1' || 0x00 || JCS(payload))",
+    "event_hash": "SHA-256('SAHAKAR-SEVA:financial-event:v1' || 0x00 || uint64_be(sequence) || previous_event_hash || payload_hash)",
+    "genesis_previous_event_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "merkle": "RFC 9162 \u00a72.1.1: leaf = SHA-256(0x00 || event_hash), node = SHA-256(0x01 || left || right)",
+    "checkpoint_digest": "SHA-256('SAHAKAR-SEVA:checkpoint:v1' || 0x00 || JCS(checkpoint body)); this digest is the RFC 3161 message imprint"
+  },
+  "verification": {
+    "offline_command": "python3 scripts/verify_receipt.py <this-file>.json --tsa-ca <independently obtained TSA root certificate PEM>",
+    "trust_anchor_note": "Obtain the TSA root certificate yourself (for DigiCert: https://cacerts.digicert.com/DigiCertTrustedRootG4.crt) and compare its SHA-256 fingerprint. Never use a certificate taken from this file as the trust anchor.",
+    "independent_copy_note": "Keep this file. A later receipt can be compared with it: scripts/verify_receipt.py new.json --compare this.json"
+  },
+  "privacy": "Contains no names, addresses, phone numbers or free-text descriptions. User IDs are random identifiers."
+}

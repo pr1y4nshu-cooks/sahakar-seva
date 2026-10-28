@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 from app.core.errors import ApiError
 from app.models.user import User
 from app.services import booking_service
+from trust_cleanup import purge_trust_rows
 
 
 @pytest.fixture
@@ -53,6 +54,7 @@ def committed_pair(test_engine: Engine):
         yield ids
     finally:
         with test_engine.begin() as conn:
+            purge_trust_rows(conn, [ids["b1"], ids["b2"]])
             conn.execute(text("DELETE FROM audit_events WHERE entity_id IN (:b1, :b2)"), {"b1": ids["b1"], "b2": ids["b2"]})
             conn.execute(text("DELETE FROM bookings WHERE id IN (:b1, :b2)"), {"b1": ids["b1"], "b2": ids["b2"]})
             conn.execute(text("DELETE FROM availability_slots WHERE id = :id"), {"id": ids["slot"]})

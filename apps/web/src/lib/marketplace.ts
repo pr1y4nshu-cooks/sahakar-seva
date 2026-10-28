@@ -40,8 +40,40 @@ export type Booking = {
   address_details: string | null; address_hidden_reason: string | null; customer_notes: string | null;
   price: { price_paise: number; fee_bps: number; fee_paise: number; payout_paise: number; fee_policy: string };
   settlement: Settlement | null;
-  dispute: { id: UUID; status: string; description: string; outcome: string | null; resolution_reason: string | null; resolved_at: string | null; opened_by_me: boolean } | null;
+  dispute: {
+    id: UUID; status: string; description: string; outcome: string | null; resolution_reason: string | null; resolved_at: string | null;
+    opened_by_me: boolean; category?: string | null; related_quote_version?: number | null; ledger_correction?: string | null;
+  } | null;
   allowed_actions: BookingAction[]; created_at: string; updated_at: string;
+  agreement_actions?: AgreementAction[];
+  agreement?: Agreement | null;
+  evidence?: Evidence | null;
+  repeat_of_booking_id?: UUID | null;
+  is_synthetic_demo?: boolean;
+};
+
+export type AgreementAction = 'revise_quote' | 'accept_quote' | 'repeat' | 'download_receipt';
+export type AgreementLine = {
+  code: string; kind: 'platform_fee' | 'processing_charge' | 'tax'; label: string; bearer: 'customer' | 'worker' | 'business' | 'platform';
+  percent_bps: number; fixed_paise: number; min_paise: number | null; max_paise: number | null; computed_paise: number;
+  amount_paise: number; waived_by: string | null; description?: string;
+};
+export type Agreement = {
+  service_price_paise: number; pricing_model: string | null; policy_definition_hash: string | null; is_example_policy: boolean | null;
+  policy_label?: string | null; line_items: AgreementLine[]; processing_note?: string | null;
+  evidence_level: 'versioned' | 'legacy_snapshot' | 'legacy'; note: string | null; quote_id: UUID | null; quote_version: number | null;
+  source: string | null; versions: number; customer_total_paise: number; worker_share_paise: number; platform_fee_paise: number;
+  additional_charges_paise: number; tax_paise: number; taxes_modeled: boolean; fee_bps: number; fee_policy_id: string | null;
+  fee_policy_version: string | null; currency: string; created_at: string | null; customer_accepted_at: string | null;
+  worker_accepted_at: string | null; awaiting_acceptance_from: 'customer' | 'worker' | null; matches_booking_snapshot: boolean;
+  tax_note: string; additional_charges_note: string;
+};
+export type Evidence = {
+  payment_evidence: string; payment_evidence_status: 'SIMULATED';
+  ledger_status: 'posted' | 'reversed' | 'legacy_not_posted' | 'not_applicable_yet';
+  ledger_transaction_id: UUID | null; ledger_balanced: boolean | null; reversal_transaction_id: UUID | null;
+  event_count: number; latest_event_hash: string | null;
+  anchor: { status: string | null; label: string; checkpoint_index: number | null; tsa_gen_time: string | null; events_externally_anchored: number; events_total: number };
 };
 
 export type Job = {
@@ -58,22 +90,25 @@ export type Application = {
 export type Earnings = {
   label: string; fee_policy: string;
   totals: { gross_paise: number; fee_paise: number; payout_paise: number; count: number; reconciles: boolean };
-  settlements: (Settlement & { booking_id: UUID; starts_at: string; locality: string })[];
+  ledger_totals?: { reversed_payout_paise: number; net_simulated_payout_paise: number; posted_with_ledger: number } | null;
+  settlements: (Settlement & { booking_id: UUID; starts_at: string; locality: string; ledger_transaction_id?: UUID | null;
+    ledger_status?: string; reversed?: boolean; customer_total_paise?: number })[];
 };
 export type DisputeQueueItem = {
   id: UUID; booking_id: UUID; status: string; description: string; opened_by_role: 'customer' | 'worker';
   booking_status: string; skill_name: string; locality: string; starts_at: string; price_paise: number;
   customer_display_name: string; worker_display_name: string; can_resolve: boolean; outcome: string | null;
   resolution_reason: string | null; resolved_at: string | null; created_at: string;
+  category?: string | null; related_quote_version?: number | null; ledger_correction?: string | null; has_simulated_settlement?: boolean;
 };
 
 const token = (): string | undefined => (window as any).__SAHAKAR_AUTH_TOKEN__ ?? undefined;
 const get = <T,>(path: string) => request<T>(`/api/v1${path}`, {}, token());
 const send = <T,>(method: string, path: string, body?: unknown) =>
   request<T>(`/api/v1${path}`, { method, body: body === undefined ? undefined : JSON.stringify(body) }, token());
-const qs = (params: Record<string, string | number | undefined | null>) => {
+const qs = (params: Record<string, string | number | boolean | undefined | null>) => {
   const p = new URLSearchParams();
-  Object.entries(params).forEach(([k, v]) => v !== undefined && v !== null && v !== '' && p.set(k, String(v)));
+  Object.entries(params).forEach(([k, v]) => v !== undefined && v !== null && v !== '' && v !== false && p.set(k, String(v)));
   const s = p.toString();
   return s ? `?${s}` : '';
 };
@@ -93,16 +128,17 @@ export const marketplace = {
   addSlot: (starts_at: string, ends_at: string) => send<Slot>('POST', '/worker-profiles/me/availability', { starts_at, ends_at }),
   removeSlot: (id: UUID) => send<void>('DELETE', `/worker-profiles/me/availability/${id}`),
 
-  searchWorkers: (p: { latitude: number; longitude: number; radius_km: number; skill_id?: string; category_id?: string; starts_at?: string; ends_at?: string }) =>
+  searchWorkers: (p: { latitude: number; longitude: number; radius_km: number; skill_id?: string; category_id?: string; starts_at?: string; ends_at?: string; sample_only?: boolean }) =>
     get<SearchResponse>(`/workers/search${qs(p)}`),
 
   requestBooking: (body: {
     worker_profile_id: UUID; slot_id: UUID; skill_id: UUID; locality: string; latitude: number; longitude: number;
-    address_details: string; customer_notes?: string;
+    address_details: string; customer_notes?: string; repeat_of_booking_id?: UUID;
   }) => send<Booking>('POST', '/bookings', body),
   myBookings: () => get<Booking[]>('/bookings/mine'),
   bookingAction: (id: UUID, action: Exclude<BookingAction, 'dispute'>) => send<Booking>('POST', `/bookings/${id}/${action}`),
-  openDispute: (id: UUID, description: string) => send<Booking>('POST', `/bookings/${id}/disputes`, { description }),
+  openDispute: (id: UUID, description: string, category?: string, receipt_event_hash?: string) =>
+    send<Booking>('POST', `/bookings/${id}/disputes`, { description, ...(category ? { category } : {}), ...(receipt_event_hash ? { receipt_event_hash } : {}) }),
   earnings: () => get<Earnings>('/earnings/mine'),
 
   postJob: (body: {
@@ -110,6 +146,7 @@ export const marketplace = {
     address_details: string; starts_at: string; duration_minutes: number; budget_paise: number; organization_id?: UUID;
   }) => send<Job>('POST', '/jobs', body),
   myJobs: () => get<Job[]>('/jobs/mine'),
+  job: (id: UUID) => get<Job>(`/jobs/${id}`),
   nearbyJobs: (skill_id?: string) => get<Job[]>(`/jobs/nearby${qs({ skill_id })}`),
   cancelJob: (id: UUID) => send<Job>('POST', `/jobs/${id}/cancel`),
   apply: (jobId: UUID, message?: string) => send<Application>('POST', `/jobs/${jobId}/applications`, { message: message || null }),
@@ -120,8 +157,8 @@ export const marketplace = {
 
   reviewerStatus: () => get<{ is_dispute_reviewer: boolean }>('/disputes/reviewer-status'),
   reviewQueue: () => get<DisputeQueueItem[]>('/disputes/review-queue'),
-  resolveDispute: (id: UUID, outcome: string, reason: string) =>
-    send<DisputeQueueItem>('POST', `/disputes/${id}/resolve`, { outcome, reason }),
+  resolveDispute: (id: UUID, outcome: string, reason: string, ledger_correction: 'none' | 'full_reversal' = 'none') =>
+    send<DisputeQueueItem>('POST', `/disputes/${id}/resolve`, { outcome, reason, ledger_correction }),
 };
 
 // ===== formatting =====
@@ -131,6 +168,15 @@ export const rupees = (paise: number) =>
 
 export const when = (iso: string) =>
   new Date(iso).toLocaleString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+
+export const DISPUTE_CATEGORIES: [string, string][] = [
+  ['customer_total_differs', 'Customer total differs from the agreed quote'],
+  ['worker_payout_differs', 'Worker payout differs from the agreed amount'],
+  ['unexpected_deduction', 'Unexpected deduction'],
+  ['payment_evidence_mismatch', 'Payment evidence mismatch'],
+  ['receipt_verification_failed', 'Receipt verification failed'],
+  ['other_booking_issue', 'Other booking problem'],
+];
 
 export const timeRange = (start: string, end: string) =>
   `${when(start)} – ${new Date(end).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}`;

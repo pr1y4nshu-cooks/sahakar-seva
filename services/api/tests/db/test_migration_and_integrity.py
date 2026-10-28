@@ -20,7 +20,7 @@ def test_postgis_extension_active(db: Session) -> None:
 
 def test_alembic_head_revision(db: Session) -> None:
     current_rev = db.execute(text("SELECT version_num FROM alembic_version")).scalar()
-    assert current_rev == "0004_marketplace_core"
+    assert current_rev == "0007_demo_provenance"
 
 
 def test_db_enforces_external_auth_id_uniqueness(db: Session) -> None:

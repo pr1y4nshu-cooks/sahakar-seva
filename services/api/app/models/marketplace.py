@@ -213,6 +213,10 @@ class Booking(Base):
     fee_paise: Mapped[int] = mapped_column(Integer)
     payout_paise: Mapped[int] = mapped_column(Integer)
     status: Mapped[str] = mapped_column(String(20), default="requested", server_default=text("'requested'"))
+    # 0005: a repeat request references the earlier booking with the same worker (never edits it).
+    repeat_of_booking_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("bookings.id", ondelete="RESTRICT"), nullable=True
+    )
     created_at: Mapped[datetime] = _created()
     updated_at: Mapped[datetime] = _updated()
 
@@ -277,8 +281,16 @@ class Dispute(Base):
     resolution_reason: Mapped[str | None] = mapped_column(Text)
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = _created()
+    # 0005: financial dispute evidence (nullable: disputes opened before 0005 have none).
+    category: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    related_quote_version: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    related_ledger_transaction_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("financial_ledger_transactions.id", ondelete="RESTRICT"), nullable=True
+    )
+    related_receipt_event_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    ledger_correction: Mapped[str | None] = mapped_column(String(20), nullable=True)
 
-    booking: Mapped[Booking] = relationship()
+    booking: Mapped[Booking] = relationship(foreign_keys=[booking_id])
 
 
 class PlatformReviewer(Base):

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Briefcase, Clock, Loader2, MapPin, Search, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
@@ -10,6 +10,8 @@ import { Input } from '@/components/ui/Input';
 import { EmptyState } from '@/components/ui/States';
 import { errorMessage, marketplace, RADII, rupees, timeRange, type WorkerResult } from '@/lib/marketplace';
 import { Alert, Field, LocationPicker, PickedLocation, Select, TextArea, localInputToIso } from '@/components/marketplace/common';
+import { ProtectedBookingBenefits } from '@/components/trust/TrustPanel';
+import { BEARER_LABELS, publicApi, trust } from '@/lib/trust';
 
 function useTaxonomy(categoryId: string) {
   const categories = useQuery({ queryKey: ['categories'], queryFn: marketplace.categories, staleTime: 300_000 });
@@ -23,7 +25,9 @@ function useTaxonomy(categoryId: string) {
 }
 
 export function Hire() {
-  const [tab, setTab] = useState<'find' | 'post'>('find');
+  const [params] = useSearchParams();
+  const template = params.get('template');
+  const [tab, setTab] = useState<'find' | 'post'>(template ? 'post' : 'find');
   return (
     <div className="min-h-screen bg-cream px-4 py-10 lg:px-8">
       <div className="mx-auto max-w-5xl">
@@ -41,7 +45,7 @@ export function Hire() {
             </button>
           ))}
         </div>
-        <div className="mt-6">{tab === 'find' ? <FindWorker /> : <PostJob />}</div>
+        <div className="mt-6">{tab === 'find' ? <FindWorker /> : <PostJob templateJobId={template} />}</div>
       </div>
     </div>
   );
@@ -52,9 +56,24 @@ function FindWorker() {
   const [skillId, setSkillId] = useState('');
   const [location, setLocation] = useState<PickedLocation | null>(null);
   const [radius, setRadius] = useState(5);
+  const overview = useQuery({ queryKey: ['overview'], queryFn: publicApi.overview, staleTime: 60_000, retry: false });
+  const localities = useQuery({ queryKey: ['localities'], queryFn: marketplace.localities, staleTime: Infinity });
+  const [sampleOnly, setSampleOnly] = useState(true);
   const [when, setWhen] = useState('');
   const [hours, setHours] = useState('2');
   const { categories, skills } = useTaxonomy(categoryId);
+
+  // Demo convenience: with a sample dataset present, start in its default locality and show matching workers at once.
+  const defaultLocality = overview.data?.default_locality;
+  const autoRan = useRef(false);
+  useEffect(() => {
+    if (!defaultLocality || location || !localities.data) return;
+    const l = localities.data.find((x) => x.name === defaultLocality);
+    if (l) setLocation({ locality: l.name, latitude: l.latitude, longitude: l.longitude });
+  }, [defaultLocality, localities.data, location]);
+  useEffect(() => {  // the API requires a service category or skill, so the demo starts on the first category
+    if (defaultLocality && !categoryId && categories.data?.length) setCategoryId(categories.data[0].id);
+  }, [defaultLocality, categories.data, categoryId]);
 
   const search = useMutation({
     mutationFn: () => {
@@ -65,11 +84,16 @@ function FindWorker() {
         radius_km: radius,
         category_id: skillId ? undefined : categoryId,
         skill_id: skillId || undefined,
+        sample_only: !!overview.data?.is_demo_dataset && sampleOnly,
         starts_at: starts ? starts.toISOString() : undefined,
         ends_at: starts ? new Date(starts.getTime() + Number(hours) * 3_600_000).toISOString() : undefined,
       });
     },
   });
+
+  useEffect(() => {
+    if (location && categoryId && defaultLocality && !autoRan.current && !search.isPending) { autoRan.current = true; search.mutate(); }
+  }, [location, categoryId, defaultLocality]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="space-y-6">
@@ -103,6 +127,9 @@ function FindWorker() {
               </Select>
             </Field>
           </div>
+          {overview.data?.is_demo_dataset && (
+            <label className="flex items-center gap-2 text-sm" data-testid="sample-only"><input type="checkbox" checked={sampleOnly} onChange={(e) => setSampleOnly(e.target.checked)} />Sample dataset only <span className="text-xs text-ink/50">(untick to include older test profiles in this local database)</span></label>
+          )}
           <Button type="submit" disabled={!categoryId || !location || search.isPending} className="gap-2">
             {search.isPending ? <Loader2 className="inline h-4 w-4 animate-spin" /> : <Search className="inline" size={16} />} Search workers
           </Button>
@@ -172,7 +199,7 @@ function WorkerCard({ worker, location, skillId }: { worker: WorkerResult; locat
             {worker.available_slots.map((s) => (
               <button key={s.id} type="button" aria-pressed={slotId === s.id} onClick={() => setSlotId(s.id)}
                 className={`rounded-xl border px-3 py-2 text-left text-xs ${slotId === s.id ? 'border-plum bg-plum/10' : 'border-ink/15 hover:bg-ink/5'}`}>
-                {timeRange(s.starts_at, s.ends_at)}<br /><span className="font-semibold">{rupees(s.price_paise)}</span>
+                {timeRange(s.starts_at, s.ends_at)}<br /><span className="font-semibold">{rupees(s.price_paise)}</span> <span className="text-ink/50">service</span>
               </button>
             ))}
           </div>
@@ -195,7 +222,7 @@ function WorkerCard({ worker, location, skillId }: { worker: WorkerResult; locat
           <Field label="Notes for the worker (optional)" htmlFor={`bk-notes-${worker.worker_profile_id}`}>
             <Input id={`bk-notes-${worker.worker_profile_id}`} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={500} />
           </Field>
-          {chosen && <p className="text-sm">Price for this slot: <strong>{rupees(chosen.price_paise)}</strong> (set by the worker's hourly rate; the worker must accept).</p>}
+          {chosen && <BookingPreview worker={worker} slot={chosen} />}
           {book.isError && <Alert kind="error">{errorMessage(book.error)}</Alert>}
           <Button type="submit" disabled={address.trim().length < 5 || book.isPending} className="w-full">
             {book.isPending ? 'Sending request…' : 'Request booking'}
@@ -209,7 +236,45 @@ function WorkerCard({ worker, location, skillId }: { worker: WorkerResult; locat
   );
 }
 
-function PostJob() {
+/** Shown before the customer sends a request: the server prices the slot with the ACTIVE fee policy. */
+function BookingPreview({ worker, slot }: { worker: WorkerResult; slot: WorkerResult['available_slots'][number] }) {
+  const preview = useQuery({ queryKey: ['pricing-preview', slot.price_paise], queryFn: () => trust.preview(slot.price_paise), retry: false });
+  const policy = useQuery({ queryKey: ['fee-policy'], queryFn: trust.feePolicy, staleTime: 60_000 });
+  const minutes = Math.round((new Date(slot.ends_at).getTime() - new Date(slot.starts_at).getTime()) / 60000);
+  const ev = preview.data?.evaluation;
+  return (
+    <div className="space-y-2 rounded-2xl bg-ink/5 p-3 text-sm" aria-label="Price before you confirm">
+      <p className="font-semibold">Before you confirm</p>
+      <p className="text-xs text-ink/60">{timeRange(slot.starts_at, slot.ends_at)} · {minutes / 60} h at {rupees(worker.hourly_rate_paise)}/hour</p>
+      {preview.isError && <Alert kind="error">{errorMessage(preview.error)}</Alert>}
+      {ev && (
+        <dl className="space-y-0.5">
+          <div className="flex justify-between"><dt>Service price</dt><dd className="font-bold">{rupees(ev.service_price_paise)}</dd></div>
+          {ev.lines.map((l) => (
+            <div key={l.code} className="flex justify-between pl-3 text-xs text-ink/70">
+              <dt>{l.label} ({BEARER_LABELS[l.bearer]}){l.waived_by ? ` — waived (${l.waived_by})` : ''}</dt><dd>{rupees(l.amount_paise)}</dd>
+            </div>
+          ))}
+          <div className="flex justify-between border-t border-ink/10 pt-1"><dt>Customer total (you pay)</dt><dd className="font-bold">{rupees(ev.customer_total_paise)}</dd></div>
+          <div className="flex justify-between"><dt>Worker payout</dt><dd className="font-bold">{rupees(ev.worker_payout_paise)}</dd></div>
+          <div className="flex justify-between"><dt>Platform charges</dt><dd className="font-bold">{rupees(ev.platform_fee_paise)}</dd></div>
+          <div className="flex justify-between text-ink/60"><dt>Processing charges (modeled)</dt><dd>{ev.processing_charge_paise ? rupees(ev.processing_charge_paise) : 'None'}</dd></div>
+          <div className="flex justify-between text-ink/60"><dt>Taxes</dt><dd>Not modeled</dd></div>
+        </dl>
+      )}
+      {preview.data && (
+        <p className="text-xs text-ink/60" data-testid="preview-policy">
+          Fee policy {preview.data.policy.policy_id} v{preview.data.policy.version}{preview.data.policy.is_example ? ' — illustrative example, not final pricing' : ''}.
+        </p>
+      )}
+      <p className="text-xs text-ink/60">Sending the request records quote version 1 with your acceptance. The worker accepts the same version when they accept the booking. A changed price needs a new version and both acceptances.</p>
+      <p className="text-xs text-ink/60">Cancellation: you can cancel before the work starts; the worker can cancel a confirmed booking. Cancelled bookings record no charges. {policy.data?.rules.payments_note}</p>
+      <ProtectedBookingBenefits compact />
+    </div>
+  );
+}
+
+function PostJob({ templateJobId }: { templateJobId?: string | null }) {
   const { user } = useAuth();
   const orgs = useMyOrganizations({ enabled: !!user });
   const [categoryId, setCategoryId] = useState('');
@@ -223,6 +288,22 @@ function PostJob() {
   const [budget, setBudget] = useState('');
   const [orgId, setOrgId] = useState('');
   const { categories, skills } = useTaxonomy(categoryId);
+  const template = useQuery({ queryKey: ['job', templateJobId], queryFn: () => marketplace.job(templateJobId!), enabled: !!templateJobId && !!user });
+  const localities = useQuery({ queryKey: ['localities'], queryFn: marketplace.localities, staleTime: Infinity, enabled: !!templateJobId });
+  useEffect(() => {
+    const t = template.data;
+    if (!t) return;
+    setCategoryId(t.skill.category_id);
+    setSkillId(t.skill.id);
+    setTitle(t.title);
+    setDescription(t.description);
+    setAddress(t.address_details ?? '');
+    setDuration(String(Math.round((new Date(t.ends_at).getTime() - new Date(t.starts_at).getTime()) / 60000)));
+    setBudget(String(t.budget_paise / 100));
+    setOrgId(t.organization_id ?? '');
+    const loc = localities.data?.find((l) => l.name === t.locality);
+    if (loc) setLocation({ locality: loc.name, latitude: loc.latitude, longitude: loc.longitude });
+  }, [template.data, localities.data]);
   const post = useMutation({
     mutationFn: () => marketplace.postJob({
       skill_id: skillId, title, description, locality: location!.locality, latitude: location!.latitude,
@@ -243,6 +324,7 @@ function PostJob() {
   return (
     <Card>
       <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); if (valid) post.mutate(); }}>
+        {template.data && <Alert kind="info">Prefilled from “{template.data.title}”. Review every field and choose a new start time before publishing. Nothing is posted until you press Publish.</Alert>}
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Service" htmlFor="j-cat">
             <Select id="j-cat" value={categoryId} onChange={(e) => { setCategoryId(e.target.value); setSkillId(''); }} required>

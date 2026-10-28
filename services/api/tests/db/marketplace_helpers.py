@@ -126,6 +126,11 @@ def at(day: int, hour: int) -> datetime:
 @pytest.fixture
 def api(db: Session) -> Generator[Api, None, None]:
     seed_service_taxonomy(db)
+    # Illustrative example policy (10% worker-borne, 15% ceiling) — a test fixture, NOT official pricing.
+    from app.core.config import get_settings
+    from app.services.fee_policy_service import bootstrap_example
+
+    bootstrap_example(db, get_settings())
     skills = {s.slug: s for s in db.query(Skill).all()}
     app.dependency_overrides[get_token_verifier] = lambda: _verifier
     try:

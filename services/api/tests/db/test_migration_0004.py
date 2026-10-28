@@ -29,7 +29,7 @@ def test_upgrade_from_3a_preserves_rows_and_downgrades_cleanly(scratch) -> None:
     conn.commit()
     # PostGIS types live in public; the scratch schema stays first so its alembic_version is used.
     conn.execute(text(f'SET search_path TO "{schema}", public'))
-    command.upgrade(cfg, "head")
+    command.upgrade(cfg, HEAD)  # this revision specifically; 0005 is covered by test_migration_0005.py
     conn.commit()
     assert _version(conn) == HEAD
     assert NEW <= _tables(conn, schema)

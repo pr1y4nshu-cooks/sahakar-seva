@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { PageWrapper, ErrorState } from "@/components/ui/States";
+import { OrgDashboard } from "@/components/trust/OrgDashboard";
 
 export function Organizations() {
   const navigate = useNavigate();
@@ -155,6 +156,7 @@ export function Organizations() {
                         )}
                       </div>
                     </div>
+                    {(org.my_membership_role === "owner" || org.my_membership_role === "admin") && <OrgDashboard orgId={org.id} />}
                   </div>
                 );
               })}

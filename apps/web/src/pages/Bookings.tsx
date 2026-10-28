@@ -4,8 +4,10 @@ import { CalendarCheck } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { EmptyState, Loading } from '@/components/ui/States';
-import { errorMessage, marketplace, rupees, timeRange, type Booking, type BookingAction } from '@/lib/marketplace';
-import { Alert, Field, SimulatedPaymentBanner, StatusPill, TextArea } from '@/components/marketplace/common';
+import { DISPUTE_CATEGORIES, errorMessage, marketplace, rupees, timeRange, type Booking, type BookingAction } from '@/lib/marketplace';
+import { Alert, Field, Select, SimulatedPaymentBanner, StatusPill, TextArea } from '@/components/marketplace/common';
+import { ProtectedBookingBenefits, TrustPanel } from '@/components/trust/TrustPanel';
+import { trust } from '@/lib/trust';
 
 const ACTION_LABELS: Record<Exclude<BookingAction, 'dispute'>, string> = {
   accept: 'Accept booking',
@@ -38,6 +40,7 @@ export function Bookings() {
           <Card><EmptyState icon={<CalendarCheck size={24} />} title="No bookings yet" description="Book a worker from Hire, or apply to jobs from Find Work." /></Card>
         )}
         {visible.map((b) => <BookingCard key={b.id} booking={b} />)}
+        <Card><ProtectedBookingBenefits compact /></Card>
       </div>
     </div>
   );
@@ -46,14 +49,24 @@ export function Bookings() {
 function BookingCard({ booking: b }: { booking: Booking }) {
   const qc = useQueryClient();
   const [disputeText, setDisputeText] = useState('');
+  const [category, setCategory] = useState('other_booking_issue');
   const [showDispute, setShowDispute] = useState(false);
   const refresh = (data: Booking) => {
     qc.setQueryData<Booking[]>(['my-bookings'], (old) => old?.map((x) => (x.id === data.id ? data : x)));
     qc.invalidateQueries({ queryKey: ['earnings'] });
     qc.invalidateQueries({ queryKey: ['my-slots'] });
   };
-  const act = useMutation({ mutationFn: (a: Exclude<BookingAction, 'dispute'>) => marketplace.bookingAction(b.id, a), onSuccess: refresh });
-  const dispute = useMutation({ mutationFn: () => marketplace.openDispute(b.id, disputeText), onSuccess: (d) => { setShowDispute(false); refresh(d); } });
+  // Accepting always names the exact quote version the worker saw, so a changed price can never be accepted by accident.
+  const act = useMutation({
+    mutationFn: (a: Exclude<BookingAction, 'dispute'>) =>
+      a === 'accept' ? trust.acceptBooking(b.id, b.agreement?.quote_version ?? null) : marketplace.bookingAction(b.id, a),
+    onSuccess: refresh,
+  });
+  const financial = category !== 'other_booking_issue';
+  const dispute = useMutation({
+    mutationFn: () => marketplace.openDispute(b.id, disputeText, category, financial ? b.evidence?.latest_event_hash ?? undefined : undefined),
+    onSuccess: (d) => { setShowDispute(false); refresh(d); },
+  });
   const transitions = b.allowed_actions.filter((a): a is Exclude<BookingAction, 'dispute'> => a !== 'dispute');
 
   return (
@@ -75,21 +88,26 @@ function BookingCard({ booking: b }: { booking: Booking }) {
       </p>
       {b.customer_notes && <p className="text-sm text-ink/70">Notes: {b.customer_notes}</p>}
 
-      <dl className="grid grid-cols-3 gap-2 rounded-2xl bg-ink/5 p-3 text-center text-sm">
-        <div><dt className="text-xs text-ink/60">Agreed price</dt><dd className="font-bold">{rupees(b.price.price_paise)}</dd></div>
-        <div><dt className="text-xs text-ink/60">Platform fee ({b.price.fee_bps / 100}%)</dt><dd className="font-bold">{rupees(b.price.fee_paise)}</dd></div>
-        <div><dt className="text-xs text-ink/60">Worker payout</dt><dd className="font-bold">{rupees(b.price.payout_paise)}</dd></div>
-      </dl>
+      {b.agreement ? (
+        <TrustPanel booking={b} onUpdate={refresh} />
+      ) : (
+        <dl className="grid grid-cols-3 gap-2 rounded-2xl bg-ink/5 p-3 text-center text-sm">
+          <div><dt className="text-xs text-ink/60">Agreed price</dt><dd className="font-bold">{rupees(b.price.price_paise)}</dd></div>
+          <div><dt className="text-xs text-ink/60">Platform charges</dt><dd className="font-bold">{rupees(b.price.fee_paise)}</dd></div>
+          <div><dt className="text-xs text-ink/60">Worker payout</dt><dd className="font-bold">{rupees(b.price.payout_paise)}</dd></div>
+        </dl>
+      )}
       <p className="text-xs text-ink/50">{b.price.fee_policy}</p>
       {b.settlement && (
         <div className="space-y-1">
           <SimulatedPaymentBanner label={b.settlement.label} />
-          <p className="text-xs text-ink/60">Simulated settlement recorded: {rupees(b.settlement.gross_paise)} = {rupees(b.settlement.fee_paise)} fee + {rupees(b.settlement.payout_paise)} payout.</p>
+          <p className="text-xs text-ink/60">Simulated settlement recorded (no real money moved): {rupees(b.settlement.gross_paise)} = {rupees(b.settlement.fee_paise)} fee + {rupees(b.settlement.payout_paise)} worker share.</p>
         </div>
       )}
       {b.dispute && (
         <Alert kind={b.dispute.status === 'resolved' ? 'success' : 'info'}>
-          Dispute {b.dispute.status}{b.dispute.opened_by_me ? ' (opened by you)' : ''}: “{b.dispute.description}”
+          Dispute {b.dispute.status}{b.dispute.opened_by_me ? ' (opened by you)' : ''}{b.dispute.category ? ` · ${DISPUTE_CATEGORIES.find(([k]) => k === b.dispute!.category)?.[1] ?? b.dispute.category}` : ''}: “{b.dispute.description}”
+          {b.dispute.ledger_correction === 'full_reversal' && <><br />The reviewer recorded a full reversal of the simulated settlement. The original ledger entries are kept.</>}
           {b.dispute.outcome && <><br />Human reviewer decision: <strong>{b.dispute.outcome.replace(/_/g, ' ')}</strong> — {b.dispute.resolution_reason}</>}
           {!b.dispute.outcome && <><br />Awaiting review by an independent human reviewer.</>}
         </Alert>
@@ -109,6 +127,12 @@ function BookingCard({ booking: b }: { booking: Booking }) {
       </div>
       {showDispute && (
         <form className="space-y-2" onSubmit={(e) => { e.preventDefault(); dispute.mutate(); }}>
+          <Field label="What kind of problem?" htmlFor={`dsc-${b.id}`}>
+            <Select id={`dsc-${b.id}`} value={category} onChange={(e) => setCategory(e.target.value)}>
+              {DISPUTE_CATEGORIES.map(([k, label]) => <option key={k} value={k}>{label}</option>)}
+            </Select>
+          </Field>
+          {financial && <p className="text-xs text-ink/60">Quote v{b.agreement?.quote_version ?? '—'}, the ledger record and the latest receipt event will be attached for the reviewer. Only the reviewer and the two parties can see them.</p>}
           <Field label="Describe the problem (reviewed by a human; no automatic penalties)" htmlFor={`dsp-${b.id}`}>
             <TextArea id={`dsp-${b.id}`} value={disputeText} onChange={(e) => setDisputeText(e.target.value)} minLength={10} maxLength={2000} required />
           </Field>

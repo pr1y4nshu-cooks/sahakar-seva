@@ -1,0 +1,9 @@
+{
+  "label": "Example: fixed booking fee paid by the customer",
+  "description": "Illustrative only. Workers receive the full service price; the customer pays a flat fee on top.",
+  "is_example": true,
+  "max_total_charge_bps": 1500,
+  "components": [
+    {"code": "booking_fee", "kind": "platform_fee", "label": "Booking fee", "bearer": "customer", "fixed_paise": 2500}
+  ]
+}

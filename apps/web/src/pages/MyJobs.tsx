@@ -53,6 +53,7 @@ function ManagedJob({ job }: { job: Job }) {
         <button type="button" onClick={() => setOpen(!open)} className="flex items-center gap-1 text-sm font-semibold text-plum">
           {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />} Applications ({job.application_count ?? 0})
         </button>
+        <Link to={`/hire?template=${job.id}`} className="text-sm font-semibold text-plum underline">Post a similar job</Link>
         {job.status === 'open' && (
           <Button variant="outline" className="ml-auto px-4 py-2" disabled={cancel.isPending}
             onClick={() => window.confirm('Cancel this job? Pending applicants will be notified as rejected.') && cancel.mutate()}>

@@ -29,6 +29,7 @@ def search(
     starts_at: datetime | None,
     ends_at: datetime | None,
     exclude_user_id: UUID | None,
+    sample_only: bool = False,
 ) -> dict:
     if skill_id is None and category_id is None:
         raise unprocessable("SEARCH_CRITERIA_REQUIRED", "Choose a service category or a skill.")
@@ -49,6 +50,7 @@ def search(
         starts_at=starts_at,
         ends_at=ends_at,
         exclude_user_id=exclude_user_id,
+        sample_only=sample_only,
     )
     ids = [r["worker_profile_id"] for r in rows]
 

@@ -28,6 +28,9 @@ done
 
 docker compose exec -T api alembic upgrade head
 docker compose exec -T api python -m app.db.seed
+# Local development only: if NO fee policy is active, activate the labelled illustrative example
+# (never replaces an active policy; it is not final pricing). See services/api/fee_policies/examples/.
+docker compose exec -T api python -m app.cli.fee_policy bootstrap-example
 docker compose exec -T api alembic current
 curl -fsS http://localhost:8000/api/v1/health && echo
 curl -fsS http://localhost:8000/api/v1/health/db && echo

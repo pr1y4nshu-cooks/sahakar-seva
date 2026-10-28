@@ -165,7 +165,10 @@ def main() -> int:
     db = subprocess.run(
         ["docker", "compose", "exec", "-T", "db", "psql", "-U", "sahakar", "-d", "sahakar_seva", "-v", "ON_ERROR_STOP=1", "-c",
          f"BEGIN; UPDATE bookings SET fee_bps=2500 WHERE id='{jb['id']}'; ROLLBACK;"], capture_output=True, text=True)
-    check("database rejects a fee above the 20% ceiling", "ck_bookings_fee_ceiling" in db.stderr)
+    # Since 0005 the price guard trigger rejects any price change on a confirmed booking before the CHECK runs;
+    # either database-level rejection satisfies this check (the CHECK itself is covered by tests/db).
+    check("database rejects a fee above the 20% ceiling",
+          db.returncode != 0 and ("ck_bookings_fee_ceiling" in db.stderr or "agreed price of a" in db.stderr))
 
     print("\nDispute with human review")
     s, d = call("POST", f"/bookings/{jb['id']}/disputes", meena, {"description": "Worker arrived two hours late and left early."})

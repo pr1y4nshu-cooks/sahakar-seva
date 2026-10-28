@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Body, Depends, Query, status
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
@@ -21,6 +21,7 @@ from app.schemas.error import ErrorResponse
 from app.schemas.marketplace import (
     ApplicationCreate,
     ApplicationRead,
+    BookingActionBody,
     BookingCreate,
     BookingRead,
     CategoryRead,
@@ -107,6 +108,7 @@ def search_workers(
     category_id: UUID | None = None,
     starts_at: datetime | None = None,
     ends_at: datetime | None = None,
+    sample_only: bool = Query(default=False, description="Only the synthetic demo dataset's workers"),
     db: Session = Depends(get_db),
     viewer: User | None = Depends(optional_me),
 ):
@@ -120,6 +122,7 @@ def search_workers(
         starts_at=starts_at,
         ends_at=ends_at,
         exclude_user_id=viewer.id if viewer else None,
+        sample_only=sample_only,
     )
 
 
@@ -190,17 +193,19 @@ def get_booking(booking_id: UUID, user: User = Depends(me), db: Session = Depend
 
 @bookings.post("/{booking_id}/disputes", response_model=BookingRead, status_code=201, responses=errors(401, 404, 409, 422, 503))
 def open_dispute(booking_id: UUID, payload: DisputeCreate, user: User = Depends(me), db: Session = Depends(get_db)):
-    return dispute_service.open_dispute(db, user, booking_id, payload.description)
+    return dispute_service.open_dispute(db, user, booking_id, payload.description, payload.category, payload.receipt_event_hash)
 
 
 @bookings.post("/{booking_id}/{action}", response_model=BookingRead, responses=errors(401, 403, 404, 409, 422, 503))
 def booking_action(
     booking_id: UUID,
     action: Literal["accept", "decline", "cancel", "start", "complete"],
+    payload: BookingActionBody | None = Body(default=None),
     user: User = Depends(me),
     db: Session = Depends(get_db),
 ):
-    return booking_service.transition(db, user, booking_id, action)
+    """``accept`` may carry ``{"quote_version": n}``; it is required once a price has been revised."""
+    return booking_service.transition(db, user, booking_id, action, payload.quote_version if payload else None)
 
 
 # --- jobs and applications ---------------------------------------------------------------
@@ -301,7 +306,7 @@ def review_queue(user: User = Depends(me), db: Session = Depends(get_db)):
 
 @disputes.post("/{dispute_id}/resolve", response_model=DisputeQueueItem, responses=errors(401, 403, 404, 409, 422, 503))
 def resolve(dispute_id: UUID, payload: DisputeResolve, user: User = Depends(me), db: Session = Depends(get_db)):
-    return dispute_service.resolve(db, user, dispute_id, payload.outcome, payload.reason)
+    return dispute_service.resolve(db, user, dispute_id, payload.outcome, payload.reason, payload.ledger_correction)
 
 
 # --- local development identity ------------------------------------------------------------

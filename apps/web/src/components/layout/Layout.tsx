@@ -6,8 +6,10 @@ import { api } from "@/lib/api-adapter";
 import { Menu, X, LogOut, User, Briefcase, Building2, CalendarCheck, ClipboardList, ListChecks, Scale } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { DevBadge } from "@/components/ui/DevBadge";
+import { DemoGuide } from "@/components/trust/DemoGuide";
+import { publicApi } from "@/lib/trust";
 
-const publicLinks = [["/hire", "Hire"], ["/find-work", "Find Work"]];
+const publicLinks = [["/hire", "Hire"], ["/find-work", "Find Work"], ["/pricing", "Pricing"]];
 const authLinks = [
   { to: "/bookings", label: "Bookings", Icon: CalendarCheck },
   { to: "/my-jobs", label: "My Jobs", Icon: ListChecks },
@@ -28,6 +30,7 @@ export function Layout() {
     enabled: !!user && !api.isFixturesMode(),
     staleTime: 300_000,
   });
+  const overview = useQuery({ queryKey: ["overview"], queryFn: publicApi.overview, staleTime: 60_000, retry: false, enabled: !api.isFixturesMode() });
   const links = [
     ...authLinks,
     ...(reviewer.data?.is_dispute_reviewer ? [{ to: "/disputes/review", label: "Review", Icon: Scale }] : []),
@@ -65,6 +68,11 @@ export function Layout() {
 
   return (
     <div className="min-h-screen bg-cream">
+      {overview.data?.is_demo_dataset && (
+        <div role="note" data-testid="demo-banner" className="bg-amber-100 px-4 py-1.5 text-center text-xs font-semibold text-amber-900">
+          {overview.data.demo_label} · people, jobs and bookings are synthetic · payments are simulated
+        </div>
+      )}
       <header className="border-b border-[#eee8f2] bg-cream/90">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5 lg:px-8">
           <Link to="/" className="text-lg font-black tracking-tight text-ink">SAHAKAR<span className="text-plum">–</span>SEVA</Link>
@@ -91,6 +99,7 @@ export function Layout() {
         <span>Hackathon MVP · payments are simulated, no real money moves</span>
       </footer>
       <DevBadge />
+      <DemoGuide />
     </div>
   );
 }

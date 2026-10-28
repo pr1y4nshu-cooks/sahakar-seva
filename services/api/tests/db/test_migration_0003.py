@@ -23,7 +23,7 @@ from app.db.testing import alembic_config
 
 PHASE2 = "0002_phase2_constraints"
 PHASE3A = "0003_skills_and_categories"
-CURRENT_HEAD = "0004_marketplace_core"  # later additive migrations build on 0003
+CURRENT_HEAD = "0007_demo_provenance"  # later additive migrations build on 0003
 NEW_TABLES = {"service_categories", "skills", "worker_skills"}
 
 

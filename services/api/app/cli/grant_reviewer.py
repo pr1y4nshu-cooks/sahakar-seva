@@ -16,6 +16,18 @@ from app.models.marketplace import PlatformReviewer
 from app.models.user import User
 
 
+def grant(db, user, note: str | None = None) -> bool:
+    """Grant dispute-reviewer rights inside ``db`` (commits). Returns False if already granted.
+
+    Same effect as ``python -m app.cli.grant_reviewer``; shared with the demo seeder so there is one code path.
+    """
+    if db.get(PlatformReviewer, user.id):
+        return False
+    db.add(PlatformReviewer(user_id=user.id, note=note))
+    db.commit()
+    return True
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--email", required=True)
@@ -35,11 +47,9 @@ def main(argv: list[str] | None = None) -> int:
                 db.commit()
             print(f"Reviewer rights revoked for {user.email}.")
             return 0
-        if existing:
+        if not grant(db, user, args.note):
             print(f"{user.email} is already a reviewer.")
             return 0
-        db.add(PlatformReviewer(user_id=user.id, note=args.note))
-        db.commit()
         print(f"Granted dispute-reviewer rights to {user.email}.")
         return 0
 

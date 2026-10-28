@@ -4,7 +4,7 @@ import { CalendarClock, Loader2, MapPinned, Trash2, Wallet, Wrench } from 'lucid
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
-import { errorMessage, marketplace, RADII, rupees, timeRange } from '@/lib/marketplace';
+import { errorMessage, marketplace, RADII, rupees, timeRange, when } from '@/lib/marketplace';
 import { Alert, Field, LocationPicker, PickedLocation, Select, SimulatedPaymentBanner, StatusPill, localInputToIso } from './common';
 
 function SectionTitle({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle: string }) {
@@ -178,11 +178,28 @@ export function EarningsSection() {
       <SectionTitle icon={<Wallet size={20} className="text-plum" />} title="Earnings (simulated)" subtitle={e.fee_policy} />
       <SimulatedPaymentBanner label={e.label} />
       <dl className="mt-4 grid grid-cols-3 gap-3 text-center">
-        <div className="rounded-2xl bg-ink/5 p-3"><dt className="text-xs text-ink/60">Customer paid</dt><dd className="font-bold">{rupees(e.totals.gross_paise)}</dd></div>
+        <div className="rounded-2xl bg-ink/5 p-3"><dt className="text-xs text-ink/60">Customers agreed (simulated)</dt><dd className="font-bold">{rupees(e.totals.gross_paise)}</dd></div>
         <div className="rounded-2xl bg-ink/5 p-3"><dt className="text-xs text-ink/60">Platform fee</dt><dd className="font-bold">{rupees(e.totals.fee_paise)}</dd></div>
-        <div className="rounded-2xl bg-emerald-50 p-3"><dt className="text-xs text-emerald-700">Your payout</dt><dd className="font-bold text-emerald-800">{rupees(e.totals.payout_paise)}</dd></div>
+        <div className="rounded-2xl bg-emerald-50 p-3"><dt className="text-xs text-emerald-700">Your share (simulated)</dt><dd className="font-bold text-emerald-800">{rupees(e.totals.payout_paise)}</dd></div>
       </dl>
       <p className="mt-2 text-xs text-ink/50">{e.totals.count} completed booking(s) · reconciles: {e.totals.reconciles ? 'yes' : 'NO'}</p>
+      {e.ledger_totals && e.ledger_totals.reversed_payout_paise > 0 && (
+        <p className="mt-1 text-xs text-ink/60">Reversed by reviewer decisions: {rupees(e.ledger_totals.reversed_payout_paise)} · net simulated payout {rupees(e.ledger_totals.net_simulated_payout_paise)}</p>
+      )}
+      {e.settlements.length > 0 && (
+        <ul className="mt-3 divide-y divide-ink/10 text-xs" aria-label="Simulated settlements">
+          {e.settlements.map((s) => (
+            <li key={s.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+              <span>{when(s.starts_at)} · {s.locality}</span>
+              <span>Customer agreed {rupees(s.gross_paise)} · fee {rupees(s.fee_paise)} · your share <strong>{rupees(s.payout_paise)}</strong></span>
+              <span className={s.reversed ? 'text-rose-700' : 'text-ink/60'}>
+                {s.ledger_status === 'posted' ? 'Ledger posted (simulated)' : s.ledger_status === 'reversed' ? 'Reversed (simulated)' : 'Legacy record'}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="mt-2 text-xs text-ink/50">These are simulated settlement records, not money transferred to you. Download a receipt for any booking from My Bookings.</p>
     </Card>
   );
 }

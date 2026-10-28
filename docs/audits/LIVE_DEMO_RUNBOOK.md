@@ -3,6 +3,8 @@
 Local hackathon demo. All data is real PostgreSQL/PostGIS data. **Payments are simulated; no money moves.**
 Demo sign-in uses the **local development identity** provider, not Supabase (see "Identity" below).
 
+For the transparent-pricing, ledger and receipt-verification demos see `TRUST_LEDGER_DEMO_RUNBOOK.md`.
+
 ## 1. Start
 
 ```bash

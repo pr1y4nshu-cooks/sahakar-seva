@@ -16,7 +16,7 @@ from app.models.user import User, WorkerProfile
 from app.repositories import marketplace_repository as mrepo
 from app.repositories import service_taxonomy_repository as taxonomy
 from app.repositories.worker_repository import get_worker_profile_by_user
-from app.services import booking_service
+from app.services import booking_service, demo_service
 from app.services.marketplace_common import (
     JOB_POINT_DECIMALS,
     audit,
@@ -63,6 +63,7 @@ def job_view(db: Session, job: Job, user: User | None, *, distance_m: float | No
         "is_manager": manager,
         "created_at": job.created_at,
         "booking_id": None,
+        "is_synthetic_demo": demo_service.is_demo(db, "job", job.id),
     }
     if manager:
         view["address_details"] = job.address_details

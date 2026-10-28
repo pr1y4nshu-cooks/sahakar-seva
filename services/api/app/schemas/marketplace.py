@@ -135,6 +135,8 @@ class BookingCreate(_Location):
     skill_id: UUID
     address_details: str = Field(..., min_length=5, max_length=500)
     customer_notes: str | None = Field(default=None, max_length=500)
+    # 0005: optional link to an earlier completed booking with the same worker ("book again").
+    repeat_of_booking_id: UUID | None = None
 
 
 class PriceBreakdown(BaseModel):
@@ -165,6 +167,69 @@ class DisputeSummary(BaseModel):
     resolution_reason: str | None = None
     resolved_at: datetime | None = None
     opened_by_me: bool
+    category: str | None = None
+    related_quote_version: int | None = None
+    related_ledger_transaction_id: UUID | None = None
+    related_receipt_event_hash: str | None = None
+    ledger_correction: str | None = None
+
+
+class AgreementSummary(BaseModel):
+    """The single authoritative price agreement both parties see (current quote version)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    evidence_level: Literal["versioned", "legacy_snapshot", "legacy"]
+    service_price_paise: int
+    pricing_model: str | None = None
+    policy_definition_hash: str | None = None
+    is_example_policy: bool | None = None
+    policy_label: str | None = None
+    line_items: list[dict] = []
+    processing_note: str | None = None
+    note: str | None = None
+    quote_id: UUID | None = None
+    quote_version: int | None = None
+    source: str | None = None
+    versions: int
+    customer_total_paise: int
+    worker_share_paise: int
+    platform_fee_paise: int
+    additional_charges_paise: int
+    tax_paise: int
+    taxes_modeled: bool
+    fee_bps: int
+    fee_policy_id: str | None = None
+    fee_policy_version: str | None = None
+    currency: str
+    created_at: datetime | None = None
+    customer_accepted_at: datetime | None = None
+    worker_accepted_at: datetime | None = None
+    awaiting_acceptance_from: Literal["customer", "worker"] | None = None
+    matches_booking_snapshot: bool
+    tax_note: str
+    additional_charges_note: str
+
+
+class AnchorSummary(BaseModel):
+    status: str | None = None
+    label: str
+    checkpoint_index: int | None = None
+    tsa_gen_time: datetime | None = None
+    events_externally_anchored: int
+    events_total: int
+
+
+class EvidenceSummary(BaseModel):
+    payment_evidence: str
+    payment_evidence_status: Literal["SIMULATED"]
+    ledger_status: Literal["posted", "reversed", "legacy_not_posted", "not_applicable_yet"]
+    ledger_transaction_id: UUID | None = None
+    ledger_balanced: bool | None = None
+    reversal_transaction_id: UUID | None = None
+    event_count: int
+    latest_event_hash: str | None = None
+    anchor: AnchorSummary
 
 
 class BookingRead(BaseModel):
@@ -188,12 +253,49 @@ class BookingRead(BaseModel):
     settlement: SettlementRead | None = None
     dispute: DisputeSummary | None = None
     allowed_actions: list[str]
+    agreement_actions: list[str] = []
+    agreement: AgreementSummary | None = None
+    evidence: EvidenceSummary | None = None
+    repeat_of_booking_id: UUID | None = None
+    is_synthetic_demo: bool = False
     created_at: datetime
     updated_at: datetime
 
 
+class BookingActionBody(_Strict):
+    quote_version: int | None = Field(default=None, ge=1)
+
+
+class QuoteRevisionCreate(_Strict):
+    # The proposed SERVICE price; the booking's fee policy computes charges, customer total and payout.
+    service_price_paise: int = Field(..., ge=5000, le=10_000_000)
+
+
+class PricingPreviewRequest(_Strict):
+    service_price_paise: int = Field(..., ge=1, le=10_000_000)
+    origin: Literal["direct", "job"] = "direct"
+    organization_id: UUID | None = None
+
+
+class PricingSimulateRequest(_Strict):
+    definition: dict
+    sample_service_prices_paise: list[int] = Field(default_factory=list, max_length=50)
+    origin: Literal["direct", "job"] = "direct"
+    for_organization: bool = False
+    include_recorded_bookings: bool = False
+
+
 class DisputeCreate(_Strict):
     description: str = Field(..., min_length=10, max_length=2000)
+    category: Literal[
+        "customer_total_differs",
+        "worker_payout_differs",
+        "unexpected_deduction",
+        "payment_evidence_mismatch",
+        "receipt_verification_failed",
+        "other_booking_issue",
+    ] | None = None
+    receipt_event_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
 
     _trim = field_validator("description")(_trimmed)
 
@@ -202,6 +304,7 @@ class EarningsRead(BaseModel):
     label: str
     fee_policy: str
     totals: dict
+    ledger_totals: dict | None = None
     settlements: list[dict]
 
 
@@ -240,6 +343,7 @@ class JobRead(BaseModel):
     my_application_status: str | None = None  # workers only
     i_declared_skill: bool | None = None  # workers only
     booking_id: UUID | None = None
+    is_synthetic_demo: bool = False
     created_at: datetime
 
 
@@ -270,6 +374,7 @@ class ApplicationRead(BaseModel):
 class DisputeResolve(_Strict):
     outcome: Literal["resolved_for_customer", "resolved_for_worker", "no_fault"]
     reason: str = Field(..., min_length=10, max_length=2000)
+    ledger_correction: Literal["none", "full_reversal"] = "none"
 
     _trim = field_validator("reason")(_trimmed)
 
@@ -280,6 +385,12 @@ class DisputeQueueItem(BaseModel):
     status: str
     description: str
     opened_by_role: Literal["customer", "worker"]
+    category: str | None = None
+    related_quote_version: int | None = None
+    related_ledger_transaction_id: UUID | None = None
+    related_receipt_event_hash: str | None = None
+    ledger_correction: str | None = None
+    has_simulated_settlement: bool = False
     booking_status: str
     skill_name: str
     locality: str

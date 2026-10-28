@@ -1,5 +1,5 @@
 import { Eye, EyeOff, Loader2, Mail, Lock, AlertCircle, CheckCircle } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { authMode } from "@/lib/api-adapter";
@@ -11,7 +11,8 @@ import { PageWrapper, ErrorState } from "@/components/ui/States";
 export function Login() {
   const navigate = useNavigate();
   const { signIn, loading: authLoading, isFixturesMode } = useAuth();
-  const [email, setEmail] = useState("");
+  const [params] = useSearchParams();
+  const [email, setEmail] = useState(authMode === "dev" ? params.get("as") ?? "" : "");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
