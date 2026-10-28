@@ -26,6 +26,20 @@ services:
       SUPABASE_URL: ${SUPABASE_URL:-}
       SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-}
       SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-}
+      # ILLUSTRATIVE example inputs for `fee_policy bootstrap-example` only; live pricing = active fee_policies row
+      PLATFORM_FEE_BPS: ${PLATFORM_FEE_BPS:-1000}
+      PLATFORM_FEE_CAP_BPS: ${PLATFORM_FEE_CAP_BPS:-1500}
+      # External RFC 3161 timestamping of ledger checkpoints (blank -> LOCAL_ONLY; nothing is sent anywhere).
+      # TSA_CA_FILE is the pinned trust anchor, relative to /app (e.g. trust/tsa/digicert-trusted-root-g4.pem).
+      TSA_URL: ${TSA_URL:-}
+      TSA_NAME: ${TSA_NAME:-}
+      TSA_CA_FILE: ${TSA_CA_FILE:-}
+      ANCHOR_WORKER_ENABLED: ${ANCHOR_WORKER_ENABLED:-true}
+      ANCHOR_WORKER_INTERVAL_SECONDS: ${ANCHOR_WORKER_INTERVAL_SECONDS:-20}
+      # Local demo identity — disabled unless explicitly enabled; refused unless APP_ENV=development
+      DEV_AUTH_ENABLED: ${DEV_AUTH_ENABLED:-false}
+      DEV_AUTH_SECRET: ${DEV_AUTH_SECRET:-}
+      DEV_AUTH_PASSCODE: ${DEV_AUTH_PASSCODE:-}
     ports:
       - "8000:8000"
     volumes:
@@ -40,6 +54,10 @@ services:
     working_dir: /app
     environment:
       VITE_API_BASE_URL: http://localhost:8000
+      # "supabase" (default) or "dev" (local demo identity; requires DEV_AUTH_ENABLED=true on the API)
+      VITE_AUTH_MODE: ${VITE_AUTH_MODE:-supabase}
+      VITE_SUPABASE_URL: ${VITE_SUPABASE_URL:-}
+      VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY:-}
     ports:
       - "5173:5173"
     volumes:

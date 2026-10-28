@@ -16,6 +16,9 @@ dependencies = [
   "uvicorn[standard]>=0.32,<1",
   "python-jose[cryptography]>=3.3,<4",
   "httpx>=0.27,<1",
+  # 0005 trust ledger: RFC 8785 canonical JSON and RFC 3161 ASN.1 (mature implementations, not hand-written)
+  "rfc8785>=0.1.4,<1",
+  "asn1crypto>=1.5,<2",
 ]
 
 [tool.setuptools.packages.find]

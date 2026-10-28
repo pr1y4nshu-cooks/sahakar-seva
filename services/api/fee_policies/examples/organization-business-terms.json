@@ -1,0 +1,11 @@
+{
+  "label": "Example: organization terms — fixed business fee, no worker deduction",
+  "description": "Illustrative only. Assign with --organization-id. The organization bears a fixed fee per booking; a future subscription could replace it (no billing exists).",
+  "is_example": true,
+  "max_total_charge_bps": 1500,
+  "subscription_plan_code": "planned-business-tools",
+  "components": [
+    {"code": "business_booking_fee", "kind": "platform_fee", "label": "Business booking fee", "bearer": "business",
+     "fixed_paise": 4000, "organization_bookings": "only"}
+  ]
+}

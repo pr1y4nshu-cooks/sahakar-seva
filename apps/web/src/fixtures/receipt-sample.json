@@ -1,0 +1,461 @@
+{
+  "receipt_format": "sahakar-seva/receipt/v1",
+  "generated_at": "2026-10-27T21:22:35.757028Z",
+  "generated_for_role": "customer",
+  "evidence_level": "versioned",
+  "notice": "Payments are SIMULATED. This receipt proves the integrity of the recorded price agreement and its allocations, and (if externally timestamped) that its checkpoint digest existed by the stated time. It does not prove that real money changed hands.",
+  "summary": {
+    "booking_id": "3edb77c4-7560-414d-963c-af1d755f1811",
+    "quote_version": 1,
+    "currency": "INR",
+    "service_price_paise": 50000,
+    "customer_total_paise": 50000,
+    "worker_share_paise": 45000,
+    "platform_fee_paise": 5000,
+    "additional_charges_paise": 0,
+    "tax_paise": 0,
+    "fee_bps": 1000,
+    "fee_policy_id": "illustrative-pilot-example",
+    "fee_policy_version": "1",
+    "pricing_model": "percentage",
+    "policy_definition_hash": "9b59951a981888ecf6f5ad79428619cde96fa289e448d202e3489d90bcee86a7"
+  },
+  "booking": {
+    "booking_id": "3edb77c4-7560-414d-963c-af1d755f1811",
+    "origin": "direct",
+    "status": "completed",
+    "skill_id": "57495fdd-32e0-4b4c-ade7-999e90d29543",
+    "starts_at": "2026-10-30T10:00:00.000000Z",
+    "ends_at": "2026-10-30T12:00:00.000000Z",
+    "repeat_of_booking_id": null
+  },
+  "agreement": {
+    "evidence_level": "versioned",
+    "note": null,
+    "quote_id": "5cebb8ae-2c3d-45aa-8cc7-4ae609f5461b",
+    "quote_version": 1,
+    "source": "booking_request",
+    "versions": 1,
+    "service_price_paise": 50000,
+    "customer_total_paise": 50000,
+    "worker_share_paise": 45000,
+    "platform_fee_paise": 5000,
+    "additional_charges_paise": 0,
+    "tax_paise": 0,
+    "taxes_modeled": false,
+    "fee_bps": 1000,
+    "fee_policy_id": "illustrative-pilot-example",
+    "fee_policy_version": "1",
+    "currency": "INR",
+    "pricing_model": "percentage",
+    "policy_definition_hash": "9b59951a981888ecf6f5ad79428619cde96fa289e448d202e3489d90bcee86a7",
+    "is_example_policy": true,
+    "policy_label": "Illustrative pilot example \u2014 10% worker-borne platform fee (NOT final pricing)",
+    "line_items": [
+      {
+        "amount_paise": 5000,
+        "bearer": "worker",
+        "code": "platform_service_fee",
+        "computed_paise": 5000,
+        "fixed_paise": 0,
+        "kind": "platform_fee",
+        "label": "Platform service fee",
+        "max_paise": null,
+        "min_paise": null,
+        "percent_bps": 1000,
+        "waived_by": null,
+        "description": "10% of the service price; deducted from the worker's payout"
+      }
+    ],
+    "created_at": "2026-10-27 21:22:29.997710+00:00",
+    "customer_accepted_at": "2026-10-27 21:22:29.997710+00:00",
+    "worker_accepted_at": "2026-10-27 21:22:30.081058+00:00",
+    "awaiting_acceptance_from": null,
+    "matches_booking_snapshot": true,
+    "tax_note": "No taxes are modeled. Displayed totals do not include GST or any other tax.",
+    "processing_note": "Processing charges, if listed, are modeled pass-through costs. No payment processor is connected.",
+    "additional_charges_note": "Processing charges, if listed, are modeled pass-through costs. No payment processor is connected."
+  },
+  "settlement": {
+    "settlement_id": "e7a71722-aaca-4544-a7e0-ea98d6073f91",
+    "gross_paise": 50000,
+    "fee_paise": 5000,
+    "payout_paise": 45000,
+    "is_simulated": true,
+    "label": "SIMULATED PAYMENT \u2014 NO REAL MONEY TRANSFERRED"
+  },
+  "ledger_transaction_ids": [
+    "b65dfb9c-711d-4f12-a83e-506b79d1dff2"
+  ],
+  "events": [
+    {
+      "sequence": 158,
+      "event_type": "quote_created",
+      "previous_event_hash": "66b801785713d492d9c40cd3f43f03a23f25b597319192c8738d1ae6480f4cbf",
+      "payload": {
+        "actor": {
+          "role": "customer",
+          "user_id": "9df499f6-140b-46f7-a74d-aa3b1d512ed8"
+        },
+        "booking_event_index": 0,
+        "booking_id": "3edb77c4-7560-414d-963c-af1d755f1811",
+        "booking_previous_event_hash": null,
+        "currency": "INR",
+        "data": {
+          "quote": {
+            "additional_charges_paise": 0,
+            "currency": "INR",
+            "customer_total_paise": 50000,
+            "evaluated_at": "2026-10-27T21:22:30Z",
+            "fee_bps": 1000,
+            "fee_cap_bps": 1500,
+            "fee_policy_id": "illustrative-pilot-example",
+            "fee_policy_record_id": "20727643-f967-483f-9dfa-9b18b18b1566",
+            "fee_policy_version": "1",
+            "for_organization": false,
+            "is_example_policy": true,
+            "line_items": [
+              {
+                "amount_paise": 5000,
+                "bearer": "worker",
+                "code": "platform_service_fee",
+                "computed_paise": 5000,
+                "fixed_paise": 0,
+                "kind": "platform_fee",
+                "label": "Platform service fee",
+                "max_paise": null,
+                "min_paise": null,
+                "percent_bps": 1000,
+                "waived_by": null
+              }
+            ],
+            "platform_fee_paise": 5000,
+            "policy_definition": {
+              "components": [
+                {
+                  "applies_to_origins": [
+                    "direct",
+                    "job"
+                  ],
+                  "bearer": "worker",
+                  "code": "platform_service_fee",
+                  "fixed_paise": 0,
+                  "kind": "platform_fee",
+                  "label": "Platform service fee",
+                  "max_paise": null,
+                  "min_paise": null,
+                  "organization_bookings": "any",
+                  "percent_bps": 1000
+                }
+              ],
+              "description": "Example policy for local demos and tests. Final commercial pricing has not been decided.",
+              "format": "sahakar-seva/fee-policy/v1",
+              "is_example": true,
+              "label": "Illustrative pilot example \u2014 10% worker-borne platform fee (NOT final pricing)",
+              "max_total_charge_bps": 1500,
+              "promotions": [],
+              "subscription_plan_code": null
+            },
+            "policy_definition_hash": "9b59951a981888ecf6f5ad79428619cde96fa289e448d202e3489d90bcee86a7",
+            "previous_version": null,
+            "pricing_basis": "worker_hourly_rate_x_slot_minutes",
+            "pricing_model": "percentage",
+            "quote_id": "5cebb8ae-2c3d-45aa-8cc7-4ae609f5461b",
+            "service_price_paise": 50000,
+            "source": "booking_request",
+            "tax_paise": 0,
+            "taxes_modeled": false,
+            "version": 1,
+            "worker_share_paise": 45000
+          },
+          "service": {
+            "duration_minutes": 120,
+            "ends_at": "2026-10-30T12:00:00.000000Z",
+            "origin": "direct",
+            "skill_id": "57495fdd-32e0-4b4c-ade7-999e90d29543",
+            "starts_at": "2026-10-30T10:00:00.000000Z"
+          }
+        },
+        "event_id": "6112aa6f-9f72-49e0-9e80-3fc80737055b",
+        "event_type": "quote_created",
+        "format": "sahakar-seva/financial-event/v1",
+        "occurred_at": "2026-10-27T21:22:30.053307Z"
+      },
+      "payload_hash": "8cfebaf123ec961477b2d3f9af70c4d039d8ed02cf0e7e0ee342f9c71900e41b",
+      "event_hash": "79ca4baa0fb10384c25eb236a28d397b32017cf82dbd97bb6052fca02ff47a43",
+      "inclusion_proof": {
+        "checkpoint_index": 18,
+        "leaf_index": 0,
+        "tree_size": 6,
+        "path": [
+          "b530fe614776736980f949246ab6a8c862bac93b2775e477c2b44645d6d5f19e",
+          "a12d899c28137459ebbb090f2cf91b9d5c42b46fe2ceb3800322bffe4811c81d",
+          "41b7cf338e3fc236a6aa73fa59c713751d170197a66a5de741cf417627ae1fc9"
+        ]
+      }
+    },
+    {
+      "sequence": 159,
+      "event_type": "quote_accepted",
+      "previous_event_hash": "79ca4baa0fb10384c25eb236a28d397b32017cf82dbd97bb6052fca02ff47a43",
+      "payload": {
+        "actor": {
+          "role": "customer",
+          "user_id": "9df499f6-140b-46f7-a74d-aa3b1d512ed8"
+        },
+        "booking_event_index": 1,
+        "booking_id": "3edb77c4-7560-414d-963c-af1d755f1811",
+        "booking_previous_event_hash": "79ca4baa0fb10384c25eb236a28d397b32017cf82dbd97bb6052fca02ff47a43",
+        "currency": "INR",
+        "data": {
+          "accepted_by_role": "customer",
+          "customer_total_paise": 50000,
+          "platform_fee_paise": 5000,
+          "quote_event_hash": "79ca4baa0fb10384c25eb236a28d397b32017cf82dbd97bb6052fca02ff47a43",
+          "quote_id": "5cebb8ae-2c3d-45aa-8cc7-4ae609f5461b",
+          "quote_version": 1,
+          "worker_share_paise": 45000
+        },
+        "event_id": "3618e365-8d91-4c65-839c-74c53be87839",
+        "event_type": "quote_accepted",
+        "format": "sahakar-seva/financial-event/v1",
+        "occurred_at": "2026-10-27T21:22:30.056843Z"
+      },
+      "payload_hash": "97ee1a576ec80a03d016968fc848a6abdab75588d3a327a024a645a745cbfd56",
+      "event_hash": "60115abc78c27f58d01e1d4bf2ed318f7bd5da52db75d7bd5c8c9782c53b7701",
+      "inclusion_proof": {
+        "checkpoint_index": 18,
+        "leaf_index": 1,
+        "tree_size": 6,
+        "path": [
+          "d3fa291f904a1d535e256c9a560b38c199a56ab28aaeb529dfa3f1764463c03c",
+          "a12d899c28137459ebbb090f2cf91b9d5c42b46fe2ceb3800322bffe4811c81d",
+          "41b7cf338e3fc236a6aa73fa59c713751d170197a66a5de741cf417627ae1fc9"
+        ]
+      }
+    },
+    {
+      "sequence": 160,
+      "event_type": "quote_accepted",
+      "previous_event_hash": "60115abc78c27f58d01e1d4bf2ed318f7bd5da52db75d7bd5c8c9782c53b7701",
+      "payload": {
+        "actor": {
+          "role": "worker",
+          "user_id": "58ae6560-813c-4411-8722-a9a58a72fdd6"
+        },
+        "booking_event_index": 2,
+        "booking_id": "3edb77c4-7560-414d-963c-af1d755f1811",
+        "booking_previous_event_hash": "60115abc78c27f58d01e1d4bf2ed318f7bd5da52db75d7bd5c8c9782c53b7701",
+        "currency": "INR",
+        "data": {
+          "accepted_by_role": "worker",
+          "customer_total_paise": 50000,
+          "platform_fee_paise": 5000,
+          "quote_event_hash": "79ca4baa0fb10384c25eb236a28d397b32017cf82dbd97bb6052fca02ff47a43",
+          "quote_id": "5cebb8ae-2c3d-45aa-8cc7-4ae609f5461b",
+          "quote_version": 1,
+          "worker_share_paise": 45000
+        },
+        "event_id": "1446f553-6c1d-4f3f-8230-e75fc985b41a",
+        "event_type": "quote_accepted",
+        "format": "sahakar-seva/financial-event/v1",
+        "occurred_at": "2026-10-27T21:22:30.086617Z"
+      },
+      "payload_hash": "aa57c95ac9def56043558a8e310745230277f5c5c54f428851607aae622c4429",
+      "event_hash": "3bf4e392b0cfb66e910c60a34b4908c99b4852caf2055d0eed845a4c915af0b1",
+      "inclusion_proof": {
+        "checkpoint_index": 18,
+        "leaf_index": 2,
+        "tree_size": 6,
+        "path": [
+          "728dd660537243e319a9d5baa4244b9ee27464e2f17a7adb57d729125963c11f",
+          "56b3682bd7ac5b9da6de1f5d61cab8e5b59f8bc66c8c2329de4a36fc2ac60726",
+          "41b7cf338e3fc236a6aa73fa59c713751d170197a66a5de741cf417627ae1fc9"
+        ]
+      }
+    },
+    {
+      "sequence": 161,
+      "event_type": "booking_confirmed",
+      "previous_event_hash": "3bf4e392b0cfb66e910c60a34b4908c99b4852caf2055d0eed845a4c915af0b1",
+      "payload": {
+        "actor": {
+          "role": "worker",
+          "user_id": "58ae6560-813c-4411-8722-a9a58a72fdd6"
+        },
+        "booking_event_index": 3,
+        "booking_id": "3edb77c4-7560-414d-963c-af1d755f1811",
+        "booking_previous_event_hash": "3bf4e392b0cfb66e910c60a34b4908c99b4852caf2055d0eed845a4c915af0b1",
+        "currency": "INR",
+        "data": {
+          "quote_id": "5cebb8ae-2c3d-45aa-8cc7-4ae609f5461b",
+          "quote_version": 1,
+          "status_from": "requested",
+          "status_to": "confirmed"
+        },
+        "event_id": "d18f3fe7-67c2-415d-a97a-44a32fa9323e",
+        "event_type": "booking_confirmed",
+        "format": "sahakar-seva/financial-event/v1",
+        "occurred_at": "2026-10-27T21:22:30.088296Z"
+      },
+      "payload_hash": "2e96e467efcfb8ffddf3f29794108def4edaa1b14381f54970ab462851f932ae",
+      "event_hash": "0abc4065cf04c868f12d572743711fca8f0f822d82e9c1f5eb0dcb38742f88a0",
+      "inclusion_proof": {
+        "checkpoint_index": 18,
+        "leaf_index": 3,
+        "tree_size": 6,
+        "path": [
+          "6bb633463d2abaf411c8eb4c43a60710b3cce4658500f927b19069aa461cc4f8",
+          "56b3682bd7ac5b9da6de1f5d61cab8e5b59f8bc66c8c2329de4a36fc2ac60726",
+          "41b7cf338e3fc236a6aa73fa59c713751d170197a66a5de741cf417627ae1fc9"
+        ]
+      }
+    },
+    {
+      "sequence": 162,
+      "event_type": "booking_completed",
+      "previous_event_hash": "0abc4065cf04c868f12d572743711fca8f0f822d82e9c1f5eb0dcb38742f88a0",
+      "payload": {
+        "actor": {
+          "role": "customer",
+          "user_id": "9df499f6-140b-46f7-a74d-aa3b1d512ed8"
+        },
+        "booking_event_index": 4,
+        "booking_id": "3edb77c4-7560-414d-963c-af1d755f1811",
+        "booking_previous_event_hash": "0abc4065cf04c868f12d572743711fca8f0f822d82e9c1f5eb0dcb38742f88a0",
+        "currency": "INR",
+        "data": {
+          "quote_id": "5cebb8ae-2c3d-45aa-8cc7-4ae609f5461b",
+          "quote_version": 1,
+          "status_from": "in_progress",
+          "status_to": "completed"
+        },
+        "event_id": "114f97e3-2018-4e1d-a37d-857efb42f52b",
+        "event_type": "booking_completed",
+        "format": "sahakar-seva/financial-event/v1",
+        "occurred_at": "2026-10-27T21:22:30.105148Z"
+      },
+      "payload_hash": "b63bb00344cfa566ad98378cdcdb42c7bd133d9e4e694be2e07fdad330b2324d",
+      "event_hash": "90cb2ba3e2b60fd6946d91daf033ce0a75329c99b8f5ca250d4183e978262050",
+      "inclusion_proof": {
+        "checkpoint_index": 18,
+        "leaf_index": 4,
+        "tree_size": 6,
+        "path": [
+          "09cf7daa67cae420ecba2695ec20bbf652ba45ebefcd9710165e317a870660da",
+          "ddc609479b4f275472dca8b2949b4addc5a13d71eef6527edb1c2ad46408cda1"
+        ]
+      }
+    },
+    {
+      "sequence": 163,
+      "event_type": "simulated_settlement_recorded",
+      "previous_event_hash": "90cb2ba3e2b60fd6946d91daf033ce0a75329c99b8f5ca250d4183e978262050",
+      "payload": {
+        "actor": {
+          "role": "customer",
+          "user_id": "9df499f6-140b-46f7-a74d-aa3b1d512ed8"
+        },
+        "booking_event_index": 5,
+        "booking_id": "3edb77c4-7560-414d-963c-af1d755f1811",
+        "booking_previous_event_hash": "90cb2ba3e2b60fd6946d91daf033ce0a75329c99b8f5ca250d4183e978262050",
+        "currency": "INR",
+        "data": {
+          "gross_paise": 50000,
+          "is_simulated": true,
+          "ledger_transaction": {
+            "amount_paise": 50000,
+            "entries": [
+              {
+                "account": "simulated_customer_payment_clearing",
+                "amount_paise": 50000,
+                "direction": "debit"
+              },
+              {
+                "account": "simulated_worker_entitlement",
+                "amount_paise": 45000,
+                "direction": "credit"
+              },
+              {
+                "account": "simulated_platform_fee_allocation",
+                "amount_paise": 5000,
+                "direction": "credit"
+              }
+            ],
+            "id": "b65dfb9c-711d-4f12-a83e-506b79d1dff2",
+            "idempotency_key": "booking-settlement:3edb77c4-7560-414d-963c-af1d755f1811",
+            "transaction_type": "simulated_booking_settlement"
+          },
+          "platform_fee_paise": 5000,
+          "processing_charge_paise": 0,
+          "quote_id": "5cebb8ae-2c3d-45aa-8cc7-4ae609f5461b",
+          "quote_version": 1,
+          "settlement_id": "e7a71722-aaca-4544-a7e0-ea98d6073f91",
+          "worker_share_paise": 45000
+        },
+        "event_id": "da711321-a9f3-4421-abc7-2b000f37275b",
+        "event_type": "simulated_settlement_recorded",
+        "format": "sahakar-seva/financial-event/v1",
+        "occurred_at": "2026-10-27T21:22:30.107519Z"
+      },
+      "payload_hash": "808825f0d6a8ebd13f002577c22d576a1b459928b4b694445136e3e115f70926",
+      "event_hash": "d11b67a51151da44c948382dc05d7be6e4823965e9ad9d9b7e05ce122a253abc",
+      "inclusion_proof": {
+        "checkpoint_index": 18,
+        "leaf_index": 5,
+        "tree_size": 6,
+        "path": [
+          "f14189fa9a304cba27049853ee526b50db9c6507e676a58f4d7aaefe59494226",
+          "ddc609479b4f275472dca8b2949b4addc5a13d71eef6527edb1c2ad46408cda1"
+        ]
+      }
+    }
+  ],
+  "checkpoints": [
+    {
+      "checkpoint_id": "dd95107e-1993-407e-ad7f-e1011523d28d",
+      "checkpoint_index": 18,
+      "body": {
+        "checkpoint_index": 18,
+        "created_at": "2026-10-27T21:22:32.982287Z",
+        "event_count": 6,
+        "first_sequence": 158,
+        "format": "sahakar-seva/checkpoint/v1",
+        "hash_alg": "sha-256",
+        "last_event_hash": "d11b67a51151da44c948382dc05d7be6e4823965e9ad9d9b7e05ce122a253abc",
+        "last_sequence": 163,
+        "merkle_construction": "RFC 9162 section 2.1.1 over event_hash leaves",
+        "merkle_root": "2289794bdd70d4168c38953507cd03cf704c8dbbd1cf3a15ce15f9b3133656b7",
+        "previous_checkpoint_digest": "724fa3788a4b37d7a44b4222de42a0216b7f2ff6bc65a54f46c5b2078b9efb37"
+      },
+      "digest": "e1c1c9e571cb8b02a2f7aafb4072ce5346c2eacfdaf936524e1fe90e8b0f9fcc",
+      "anchor_status": "EXTERNALLY_ANCHORED",
+      "external_timestamp": {
+        "protocol": "RFC 3161",
+        "tsa_name": "DigiCert Timestamp Authority",
+        "tsa_url": "http://timestamp.digicert.com",
+        "request_nonce": "715682599600803029",
+        "time_stamp_response_der_b64": "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",
+        "gen_time": "2026-10-27T21:22:33.000000Z",
+        "serial_number": "21819037588175797509655799012893577194",
+        "policy_oid": "2.16.840.1.114412.7.1",
+        "signer_subject": "Common Name: DigiCert SHA256 RSA4096 Timestamp Responder 2026 1; Organization: DigiCert, Inc.; Country: US",
+        "server_trust_anchor_sha256": "552f7bdcf1a7af9e6ce672017f4f12abf77240c78e761ac203d1d9d20ac89988"
+      }
+    }
+  ],
+  "hashing": {
+    "canonicalization": "RFC 8785 (JCS); integers only, ASCII keys",
+    "payload_hash": "SHA-256('SAHAKAR-SEVA:financial-event-payload:v1' || 0x00 || JCS(payload))",
+    "event_hash": "SHA-256('SAHAKAR-SEVA:financial-event:v1' || 0x00 || uint64_be(sequence) || previous_event_hash || payload_hash)",
+    "genesis_previous_event_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "merkle": "RFC 9162 \u00a72.1.1: leaf = SHA-256(0x00 || event_hash), node = SHA-256(0x01 || left || right)",
+    "checkpoint_digest": "SHA-256('SAHAKAR-SEVA:checkpoint:v1' || 0x00 || JCS(checkpoint body)); this digest is the RFC 3161 message imprint"
+  },
+  "verification": {
+    "offline_command": "python3 scripts/verify_receipt.py <this-file>.json --tsa-ca <independently obtained TSA root certificate PEM>",
+    "trust_anchor_note": "Obtain the TSA root certificate yourself (for DigiCert: https://cacerts.digicert.com/DigiCertTrustedRootG4.crt) and compare its SHA-256 fingerprint. Never use a certificate taken from this file as the trust anchor.",
+    "independent_copy_note": "Keep this file. A later receipt can be compared with it: scripts/verify_receipt.py new.json --compare this.json"
+  },
+  "privacy": "Contains no names, addresses, phone numbers or free-text descriptions. User IDs are random identifiers."
+}

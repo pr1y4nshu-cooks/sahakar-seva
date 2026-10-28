@@ -1,0 +1,13 @@
+{
+  "label": "Example: percentage fee with a launch waiver for small jobs",
+  "description": "Illustrative only. The service fee is waived until the stated date for services up to ₹1,000.",
+  "is_example": true,
+  "max_total_charge_bps": 1500,
+  "components": [
+    {"code": "platform_service_fee", "kind": "platform_fee", "label": "Platform service fee", "bearer": "worker", "percent_bps": 800}
+  ],
+  "promotions": [
+    {"code": "launch_small_jobs", "label": "Launch: no service fee on jobs up to ₹1,000", "waives": ["platform_service_fee"],
+     "ends_at": "2027-01-01T00:00:00+05:30", "max_service_price_paise": 100000}
+  ]
+}

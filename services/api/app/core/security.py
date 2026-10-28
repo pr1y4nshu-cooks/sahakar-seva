@@ -80,6 +80,18 @@ def verify_token_against_supabase(token: str) -> VerifiedUser:
     3. Fails closed (503) if network/provider is unavailable or unconfigured.
     """
     settings = get_settings()
+
+    # Local development identities (disabled by default, never accepted when disabled).
+    from app.core.dev_auth import DevAuthError, is_dev_token, verify_dev_token
+
+    if is_dev_token(token):
+        try:
+            claims = verify_dev_token(settings, token)
+        except DevAuthError as exc:
+            raise InvalidTokenException(str(exc)) from exc
+        metadata = claims.get("user_metadata") or {}
+        return VerifiedUser(sub=str(claims["sub"]), email=str(claims["email"]), display_name_hint=metadata.get("display_name"))
+
     # Process environment takes precedence; Settings also picks the value up from the .env file.
     jwt_secret = os.getenv("SUPABASE_JWT_SECRET") or settings.supabase_jwt_secret
 

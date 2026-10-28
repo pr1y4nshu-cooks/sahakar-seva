@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { useMyOrganizations, useWorkerProfile } from "@/hooks/useApi";
 import { Card } from "@/components/ui/Card";
 import { PageWrapper } from "@/components/ui/States";
+import { DashboardActivity } from "@/components/trust/DashboardActivity";
 import type { WorkerProfile, OrganizationWithMyRole } from "@/types/api";
 
 export function Dashboard() {
@@ -98,6 +99,8 @@ export function Dashboard() {
           </Card>
         </div>
 
+        <DashboardActivity />
+
         {/* Navigation Cards */}
         <div className="grid gap-4 md:grid-cols-2 mb-8">
           <Link to="/earn" className="block">
@@ -146,9 +149,9 @@ export function Dashboard() {
                     <LayoutDashboard className="h-6 w-6 text-ink/40" />
                   </div>
                   <h3 className="mt-4 text-lg font-bold text-ink/60">Hire — Find Workers</h3>
-                  <p className="mt-1 text-sm text-ink/50">Coming in Phase 3: Discover and hire local workers.</p>
+                  <p className="mt-1 text-sm text-ink/50">Search nearby workers or post a job.</p>
                 </div>
-                <span className="px-2 py-1 text-xs rounded-full bg-ink/5 text-ink/40">Soon</span>
+                <span className="px-2 py-1 text-xs rounded-full bg-plum/10 text-plum">Open</span>
               </div>
             </Card>
           </Link>
@@ -161,9 +164,9 @@ export function Dashboard() {
                     <Briefcase className="h-6 w-6 text-ink/40" />
                   </div>
                   <h3 className="mt-4 text-lg font-bold text-ink/60">Find Work — Job Board</h3>
-                  <p className="mt-1 text-sm text-ink/50">Coming in Phase 3: Browse and apply to local jobs.</p>
+                  <p className="mt-1 text-sm text-ink/50">Browse jobs inside your service area.</p>
                 </div>
-                <span className="px-2 py-1 text-xs rounded-full bg-ink/5 text-ink/40">Soon</span>
+                <span className="px-2 py-1 text-xs rounded-full bg-plum/10 text-plum">Open</span>
               </div>
             </Card>
           </Link>
@@ -208,18 +211,19 @@ export function Dashboard() {
           </div>
         </Card>
 
-        {/* Phase 2 Notice */}
+        {/* MVP notice */}
         <Card className="bg-plum/5 border-plum/20">
           <div className="flex items-start gap-3">
             <div className="h-8 w-8 rounded-lg bg-plum/20 flex items-center justify-center flex-shrink-0">
               <Settings className="h-4 w-4 text-plum" />
             </div>
             <div>
-              <h3 className="font-semibold text-plum">Phase 2 — Identity & Profiles</h3>
+              <h3 className="font-semibold text-plum">Hackathon MVP</h3>
               <p className="mt-1 text-sm text-plum/80">
-                This is the foundation phase. Marketplace features (hiring, job posts, bookings, payments)
-                will be built in future phases. All authentication is handled by Supabase Auth.
+                Direct hire, job posts, bookings, simulated earnings and human-reviewed disputes are live.
+                Payments are simulated: no real money is transferred. Skills are self-declared.
               </p>
+              <p className="mt-2 text-sm"><a href="/bookings" className="font-semibold text-plum underline">Go to My Bookings</a></p>
             </div>
           </div>
         </Card>

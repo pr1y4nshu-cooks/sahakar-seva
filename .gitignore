@@ -30,3 +30,6 @@ apps/web/vite.config.d.ts
 
 # Local agent/tooling
 .claude/
+
+# Public RFC 3161 trust anchors (CA certificates, not secrets) used to verify timestamp tokens
+!services/api/trust/tsa/*.pem

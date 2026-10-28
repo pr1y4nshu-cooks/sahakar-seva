@@ -1,7 +1,6 @@
 import { Route, Routes, Navigate } from "react-router-dom";
 import { Layout } from "./components/layout/Layout";
 import { Home } from "./pages/Home";
-import { Placeholder } from "./pages/Placeholder";
 import { Login } from "./pages/Login";
 import { Signup } from "./pages/Signup";
 import { Dashboard } from "./pages/Dashboard";
@@ -10,6 +9,16 @@ import { Earn } from "./pages/Earn";
 import { Organizations } from "./pages/Organizations";
 import { Hire } from "./pages/Hire";
 import { FindWork } from "./pages/FindWork";
+import { Bookings } from "./pages/Bookings";
+import { MyJobs } from "./pages/MyJobs";
+import { MyApplications } from "./pages/MyApplications";
+import { DisputeReview } from "./pages/DisputeReview";
+import { Pricing } from "./pages/Pricing";
+import { Verify } from "./pages/Verify";
+import { Economics } from "./pages/Economics";
+import { BookingTransparency } from "./pages/BookingTransparency";
+import { DemoHub, DemoTransparency } from "./pages/DemoHub";
+import { TamperDemo } from "./pages/TamperDemo";
 import { AuthProvider } from "./lib/auth";
 import { ErrorBoundary } from "./components/ui/ErrorBoundary";
 import { AuthGuard, PublicOnlyGuard } from "./components/auth/AuthGuard";
@@ -57,6 +66,17 @@ export function App() {
             />
             <Route path="hire" element={<Hire />} />
             <Route path="find-work" element={<FindWork />} />
+            <Route path="bookings" element={<AuthGuard><Bookings /></AuthGuard>} />
+            <Route path="my-jobs" element={<AuthGuard><MyJobs /></AuthGuard>} />
+            <Route path="applications" element={<AuthGuard><MyApplications /></AuthGuard>} />
+            <Route path="disputes/review" element={<AuthGuard><DisputeReview /></AuthGuard>} />
+            <Route path="pricing" element={<Pricing />} />
+            <Route path="verify" element={<Verify />} />
+            <Route path="economics" element={<Economics />} />
+            <Route path="bookings/:bookingId/transparency" element={<AuthGuard><BookingTransparency /></AuthGuard>} />
+            <Route path="demo" element={<DemoHub />} />
+            <Route path="demo/transparency/:key" element={<DemoTransparency />} />
+            <Route path="demo/tamper" element={<TamperDemo />} />
           </Route>
         </Routes>
       </AuthProvider>

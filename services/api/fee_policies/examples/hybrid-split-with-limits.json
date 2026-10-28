@@ -1,0 +1,12 @@
+{
+  "label": "Example: hybrid fee split between customer and worker, with minimum and maximum",
+  "description": "Illustrative only. Worker share: 4% + ₹5 (at least ₹15, at most ₹150). Customer: ₹10 convenience fee. Modeled processing cost absorbed by the platform.",
+  "is_example": true,
+  "max_total_charge_bps": 1500,
+  "components": [
+    {"code": "platform_service_fee", "kind": "platform_fee", "label": "Platform service fee", "bearer": "worker",
+     "percent_bps": 400, "fixed_paise": 500, "min_paise": 1500, "max_paise": 15000},
+    {"code": "convenience_fee", "kind": "platform_fee", "label": "Convenience fee", "bearer": "customer", "fixed_paise": 1000},
+    {"code": "modeled_processing", "kind": "processing_charge", "label": "Modeled payment processing (absorbed)", "bearer": "platform", "percent_bps": 200}
+  ]
+}

@@ -1,7 +1,8 @@
 import { Eye, EyeOff, Loader2, Mail, Lock, AlertCircle, CheckCircle } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
+import { authMode } from "@/lib/api-adapter";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -10,7 +11,8 @@ import { PageWrapper, ErrorState } from "@/components/ui/States";
 export function Login() {
   const navigate = useNavigate();
   const { signIn, loading: authLoading, isFixturesMode } = useAuth();
-  const [email, setEmail] = useState("");
+  const [params] = useSearchParams();
+  const [email, setEmail] = useState(authMode === "dev" ? params.get("as") ?? "" : "");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -48,6 +50,11 @@ export function Login() {
             </Link>
             <h1 className="mt-6 text-2xl font-bold text-ink">Welcome back</h1>
             <p className="mt-2 text-sm text-ink/60">Sign in to access your dashboard</p>
+            {authMode === 'dev' && !isFixturesMode && (
+              <p className="mt-2 text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded">
+                Local demo identity mode: use an @demo.sahakar.test email and the demo passcode as the password. Not production authentication.
+              </p>
+            )}
             {isFixturesMode && (
               <p className="mt-2 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
                 Dev fixtures mode — use any email/password

@@ -1,0 +1,9 @@
+{
+  "label": "Example: percentage fee deducted from the worker's payout",
+  "description": "Illustrative only. A percentage of the service price, borne by the worker.",
+  "is_example": true,
+  "max_total_charge_bps": 1500,
+  "components": [
+    {"code": "platform_service_fee", "kind": "platform_fee", "label": "Platform service fee", "bearer": "worker", "percent_bps": 1000}
+  ]
+}
