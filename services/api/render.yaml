@@ -1,0 +1,37 @@
+# Render Blueprint for the SAHAKAR-SEVA API (FastAPI).
+# Backend = Render Web Service (Docker), Database = Neon (external, not managed here),
+# Frontend = Vercel (separate). Import via Render Dashboard -> Blueprints, or create the
+# Web Service manually with the same settings.
+#
+# The Dockerfile already runs uvicorn (no --reload) bound to 0.0.0.0:$PORT (Render injects PORT).
+# Migrations are NOT run here; apply them explicitly once (see docs/DEPLOYMENT_GUIDE.md section 5).
+services:
+  - type: web
+    name: sahakar-seva-api
+    runtime: docker
+    plan: free
+    region: oregon
+    rootDir: services/api
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/v1/health
+    autoDeploy: false
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DEV_AUTH_ENABLED
+        value: "false"
+      - key: ANCHOR_WORKER_ENABLED
+        value: "false"
+      # Secrets / per-environment values: set these in the Render dashboard (never commit them).
+      # DATABASE_URL must be the Neon connection string with sslmode=require (direct endpoint
+      # recommended; see the deployment guide for the pooled-endpoint caveat).
+      - key: DATABASE_URL
+        sync: false
+      # Exact Vercel origin(s), comma-separated. Wildcard "*" is rejected by the API.
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false

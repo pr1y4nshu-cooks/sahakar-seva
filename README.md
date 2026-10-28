@@ -185,6 +185,7 @@ including a direct answer to the "you could fake payments in your own database" 
 - [`docs/TESTING_AND_EVIDENCE.md`](docs/TESTING_AND_EVIDENCE.md) — executed test results
 - [`docs/architecture/FINANCIAL_TRANSPARENCY_AND_ANCHORING.md`](docs/architecture/FINANCIAL_TRANSPARENCY_AND_ANCHORING.md) — ledger/receipt formats
 - API contracts: [`docs/contracts/MVP_MARKETPLACE_CONTRACT.md`](docs/contracts/MVP_MARKETPLACE_CONTRACT.md), [`docs/contracts/TRUST_LEDGER_API_CONTRACT.md`](docs/contracts/TRUST_LEDGER_API_CONTRACT.md)
+- Deployment (Vercel + Render + Neon + Supabase): [`docs/DEPLOYMENT_GUIDE.md`](docs/DEPLOYMENT_GUIDE.md)
 - Security policy: [`SECURITY.md`](SECURITY.md)
 
 ## License
